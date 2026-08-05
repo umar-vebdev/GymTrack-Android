@@ -21,8 +21,6 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.Eagerly, authRepository.isLoggedIn())
 
     val userName: StateFlow<String> = authRepository.userName
-    val serverUrl: StateFlow<String> = authRepository.serverUrl
-    val isDemoMode: StateFlow<Boolean> = authRepository.isDemoMode
 
     // Navigation & Selected Client (for Tablet Split-View or Phone details)
     private val _selectedClientId = MutableStateFlow<Long?>(1L)
@@ -192,18 +190,4 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun updateServerSettings(url: String, isDemo: Boolean) {
-        authRepository.updateServerConfig(url, isDemo)
-        viewModelScope.launch {
-            _uiMessage.emit("Настройки сервера обновлены")
-        }
-    }
-
-    fun resetSampleData() {
-        viewModelScope.launch {
-            db.clearAllTables()
-            gymRepository.ensureDataInitialized()
-            _uiMessage.emit("Демо-данные пересозданы")
-        }
-    }
 }

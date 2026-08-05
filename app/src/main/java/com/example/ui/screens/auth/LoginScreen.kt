@@ -26,12 +26,6 @@ import com.example.ui.viewmodel.GymViewModel
 fun LoginScreen(viewModel: GymViewModel) {
     var email by remember { mutableStateOf("staff@gymtrack.com") }
     var password by remember { mutableStateOf("123456") }
-    var showServerConfig by remember { mutableStateOf(false) }
-
-    val currentServerUrl by viewModel.serverUrl.collectAsState()
-    val isDemoMode by viewModel.isDemoMode.collectAsState()
-
-    var customUrl by remember(currentServerUrl) { mutableStateOf(currentServerUrl) }
 
     Box(
         modifier = Modifier
@@ -151,63 +145,6 @@ fun LoginScreen(viewModel: GymViewModel) {
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                TextButton(onClick = { showServerConfig = !showServerConfig }) {
-                    Icon(
-                        imageVector = if (showServerConfig) Icons.Default.ExpandLess else Icons.Default.Settings,
-                        contentDescription = null,
-                        tint = GymPrimaryIndigo,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (showServerConfig) "Скрыть настройки сервера" else "Настройки подключения к API",
-                        color = GymPrimaryIndigo
-                    )
-                }
-
-                AnimatedVisibility(visible = showServerConfig) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp)
-                            .background(GymBgLight, RoundedCornerShape(16.dp))
-                            .padding(14.dp)
-                    ) {
-                        Text(
-                            text = "URL сервера API:",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = GymTextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        OutlinedTextField(
-                            value = customUrl,
-                            onValueChange = { customUrl = it },
-                            placeholder = { Text("https://mygym.com/api/") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            textStyle = MaterialTheme.typography.bodySmall,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedContainerColor = GymSurfaceWhite,
-                                focusedContainerColor = GymSurfaceWhite
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Button(
-                            onClick = {
-                                viewModel.updateServerSettings(customUrl, isDemoMode)
-                                showServerConfig = false
-                            },
-                            modifier = Modifier.align(Alignment.End),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo)
-                        ) {
-                            Text("Сохранить URL", color = Color.White)
-                        }
-                    }
-                }
             }
         }
     }

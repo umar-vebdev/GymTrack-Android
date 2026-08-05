@@ -22,11 +22,6 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val userName by viewModel.userName.collectAsState()
-    val serverUrl by viewModel.serverUrl.collectAsState()
-    val isDemoMode by viewModel.isDemoMode.collectAsState()
-
-    var customUrl by remember(serverUrl) { mutableStateOf(serverUrl) }
-    var demoToggle by remember(isDemoMode) { mutableStateOf(isDemoMode) }
 
     Box(modifier = modifier.fillMaxSize().background(GymBgLight)) {
         LazyColumn(
@@ -76,103 +71,6 @@ fun SettingsScreen(
                 }
             }
 
-            // Server API URL Config
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = GymSurfaceWhite),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "ПОДКЛЮЧЕНИЕ К СЕРВЕРУ GYMTRACK API",
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                            color = GymTextSecondary
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        OutlinedTextField(
-                            value = customUrl,
-                            onValueChange = { customUrl = it },
-                            label = { Text("Base API URL") },
-                            placeholder = { Text("https://mygymserver.com/api/") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = GymBgLight,
-                                unfocusedContainerColor = GymBgLight,
-                                focusedBorderColor = GymPrimaryIndigo
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text("Демо-режим (Автономная работа)", style = MaterialTheme.typography.bodyMedium, color = GymTextPrimary, fontWeight = FontWeight.Bold)
-                                Text("Локальная баз данных Room с клиентами", style = MaterialTheme.typography.bodySmall, color = GymTextSecondary)
-                            }
-                            Switch(
-                                checked = demoToggle,
-                                onCheckedChange = { demoToggle = it },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.White,
-                                    checkedTrackColor = GymPrimaryIndigo
-                                )
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Button(
-                            onClick = { viewModel.updateServerSettings(customUrl, demoToggle) },
-                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("Сохранить конфигурацию", color = Color.White, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-
-            // Data Management Card
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = GymSurfaceWhite),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "УПРАВЛЕНИЕ ДАННЫМИ",
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                            color = GymTextSecondary
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        OutlinedButton(
-                            onClick = { viewModel.resetSampleData() },
-                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = GymPrimaryIndigo)
-                        ) {
-                            Icon(Icons.Default.Refresh, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Пересоздать тестовые данные (Перезапуск DB)")
-                        }
-                    }
-                }
-            }
         }
     }
 }
