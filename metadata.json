@@ -1,0 +1,8 @@
+{
+  "name": "GymTrack",
+  "description": "Gym CRM system for client management, check-in, memberships, sales, and analytics optimized for tablets and mobile devices.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
