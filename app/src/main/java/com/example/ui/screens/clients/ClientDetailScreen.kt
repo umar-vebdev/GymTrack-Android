@@ -1,6 +1,5 @@
 package com.example.ui.screens.clients
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,18 +34,18 @@ fun ClientDetailScreen(
 ) {
     if (client == null) {
         Box(
-            modifier = modifier.fillMaxSize().background(GymBgLight),
+            modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
                     imageVector = Icons.Default.Badge,
                     contentDescription = null,
-                    tint = GymTextMuted,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(64.dp)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                Text("Выберите клиента из списка", style = MaterialTheme.typography.titleMedium, color = GymTextSecondary)
+                Text("Выберите клиента из списка", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         return
@@ -63,23 +61,23 @@ fun ClientDetailScreen(
     var showPurchaseTariffModal by remember { mutableStateOf(false) }
     var showSellProductModal by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.fillMaxSize().background(GymBgLight)) {
+    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(modifier = Modifier.fillMaxSize()) {
 
             // Top Bar if on phone (with back arrow)
             if (onBackClick != null) {
-                Surface(color = GymSurfaceWhite) {
+                Surface(color = MaterialTheme.colorScheme.surface) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onBackClick) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = GymTextPrimary)
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
                         }
                         Text(
                             text = "Карточка клиента",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = GymTextPrimary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -109,24 +107,24 @@ fun ClientDetailScreen(
                 item {
                     TabRow(
                         selectedTabIndex = selectedTabIndex,
-                        containerColor = GymSurfaceWhite,
+                        containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = GymPrimaryIndigo,
                         divider = {}
                     ) {
                         Tab(
                             selected = selectedTabIndex == 0,
                             onClick = { selectedTabIndex = 0 },
-                            text = { Text("Визиты (${visits.size})", color = if (selectedTabIndex == 0) GymPrimaryIndigo else GymTextSecondary) }
+                            text = { Text("Визиты (${visits.size})", color = if (selectedTabIndex == 0) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant) }
                         )
                         Tab(
                             selected = selectedTabIndex == 1,
                             onClick = { selectedTabIndex = 1 },
-                            text = { Text("Абонементы (${purchases.size})", color = if (selectedTabIndex == 1) GymPrimaryIndigo else GymTextSecondary) }
+                            text = { Text("Абонементы (${purchases.size})", color = if (selectedTabIndex == 1) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant) }
                         )
                         Tab(
                             selected = selectedTabIndex == 2,
                             onClick = { selectedTabIndex = 2 },
-                            text = { Text("Товары (${sales.size})", color = if (selectedTabIndex == 2) GymPrimaryIndigo else GymTextSecondary) }
+                            text = { Text("Товары (${sales.size})", color = if (selectedTabIndex == 2) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant) }
                         )
                     }
                 }
@@ -135,35 +133,29 @@ fun ClientDetailScreen(
                 when (selectedTabIndex) {
                     0 -> {
                         if (visits.isEmpty()) {
-                            item {
-                                EmptyStateText("История визитов пуста")
-                            }
+                            item { EmptyStateText("История визитов пуста") }
                         } else {
-                            items(visits) { visit ->
-                                VisitHistoryItem(visit)
+                            items(visits) { visit -> 
+                                VisitHistoryItem(visit) {
+                                    viewModel.cancelCheckIn(visit.id)
+                                }
                             }
                         }
                     }
                     1 -> {
                         if (purchases.isEmpty()) {
-                            item {
-                                EmptyStateText("Купленных абонементов нет")
-                            }
+                            item { EmptyStateText("Купленных абонементов нет") }
                         } else {
-                            items(purchases) { purchase ->
-                                PurchaseHistoryItem(purchase)
+                            items(purchases) { purchase -> 
+                                PurchaseHistoryItem(purchase, client)
                             }
                         }
                     }
                     2 -> {
                         if (sales.isEmpty()) {
-                            item {
-                                EmptyStateText("Покупок товаров нет")
-                            }
+                            item { EmptyStateText("Покупок товаров нет") }
                         } else {
-                            items(sales) { sale ->
-                                ProductSaleHistoryItem(sale)
-                            }
+                            items(sales) { sale -> ProductSaleHistoryItem(sale) }
                         }
                     }
                 }
@@ -201,7 +193,7 @@ fun ClientDetailScreen(
 fun ClientHeaderCard(client: Client) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = GymSurfaceWhite),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -235,15 +227,15 @@ fun ClientHeaderCard(client: Client) {
                 Text(
                     text = client.fullName,
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = GymTextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Phone, contentDescription = null, tint = GymTextSecondary, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Phone, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = client.phone, style = MaterialTheme.typography.bodyMedium, color = GymTextSecondary)
+                    Text(text = client.phone, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -257,7 +249,7 @@ fun ClientHeaderCard(client: Client) {
                     )
                 }
 
-                if (!client.note.isNull_or_blank()) {
+                if (!client.note.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Заметка: ${client.note}",
@@ -281,7 +273,7 @@ fun ActiveMembershipSection(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = GymSurfaceWhite),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -289,7 +281,7 @@ fun ActiveMembershipSection(
             Text(
                 text = "ТЕКУЩИЙ АБОНЕМЕНТ",
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
-                color = GymTextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -304,7 +296,7 @@ fun ActiveMembershipSection(
                         Text(
                             text = active.tariffName,
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            color = GymTextPrimary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
@@ -376,15 +368,17 @@ fun ActiveMembershipSection(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                OutlinedButton(
-                    onClick = onRenewClick,
-                    modifier = Modifier.weight(1f).height(46.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = GymPrimaryIndigo)
-                ) {
-                    Icon(Icons.Default.CardMembership, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Продлить")
+                if (active == null) {
+                    OutlinedButton(
+                        onClick = onRenewClick,
+                        modifier = Modifier.weight(1f).height(46.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = GymPrimaryIndigo)
+                    ) {
+                        Icon(Icons.Default.CardMembership, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Оформить")
+                    }
                 }
 
                 OutlinedButton(
@@ -403,10 +397,12 @@ fun ActiveMembershipSection(
 }
 
 @Composable
-fun VisitHistoryItem(visit: Visit) {
+fun VisitHistoryItem(visit: Visit, onCancel: () -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = GymSurfaceWhite),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
@@ -416,30 +412,76 @@ fun VisitHistoryItem(visit: Visit) {
             Icon(Icons.Default.CheckCircleOutline, contentDescription = null, tint = GymGreenSuccess)
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("Посещение зала", style = MaterialTheme.typography.titleMedium, color = GymTextPrimary)
-                Text(visit.visitedAt, style = MaterialTheme.typography.bodySmall, color = GymTextSecondary)
+                Text("Посещение зала", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text(visit.visitedAt, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            IconButton(
+                onClick = { showDialog = true },
+            ) {
+                Icon(Icons.Default.Close, contentDescription = "Cancel", tint = GymRoseAlert, modifier = Modifier.size(20.dp))
             }
         }
+    }
+    
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Отмена чек-ина", fontWeight = FontWeight.Bold) },
+            text = { Text("Вы точно хотите отменить этот визит? Одно посещение будет возвращено на баланс активного абонемента.") },
+            confirmButton = {
+                Button(
+                    onClick = { 
+                        onCancel()
+                        showDialog = false 
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = GymRoseAlert)
+                ) { Text("Удалить", color = Color.White) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) { Text("Отмена") }
+            }
+        )
     }
 }
 
 @Composable
-fun PurchaseHistoryItem(purchase: MembershipPurchase) {
+fun PurchaseHistoryItem(purchase: MembershipPurchase, client: Client) {
+    val isActive = client.activeMembership?.id == purchase.id
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = GymSurfaceWhite),
-        shape = RoundedCornerShape(12.dp)
+        colors = CardDefaults.cardColors(containerColor = if (isActive) GymIndigoContainer else MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isActive) 2.dp else 1.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.CardMembership, contentDescription = null, tint = GymPrimaryIndigo)
+            Icon(Icons.Default.CardMembership, contentDescription = null, tint = if (isActive) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(purchase.membershipTypeName, style = MaterialTheme.typography.titleMedium, color = GymTextPrimary)
-                Text("Сумма: ${purchase.amountPaid.toInt()} ₽ (${if (purchase.paymentMethod == "cash") "Наличные" else "Карта"})", style = MaterialTheme.typography.bodySmall, color = GymTextSecondary)
-                Text("C ${purchase.startsAt} до ${purchase.expiresAt ?: "—"}", style = MaterialTheme.typography.bodySmall, color = GymTextMuted)
+                Text(
+                    text = purchase.membershipTypeName, 
+                    style = MaterialTheme.typography.titleMedium, 
+                    color = if (isActive) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurface,
+                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
+                )
+                Text("Сумма: ${purchase.amountPaid.toInt()} сомони (${if (purchase.paymentMethod == "cash") "Наличные" else "Карта"})", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("C ${purchase.startsAt} до ${purchase.expiresAt ?: "—"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (isActive) {
+                Surface(
+                    color = GymPrimaryIndigo,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "АКТИВНЫЙ",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
         }
     }
@@ -449,7 +491,7 @@ fun PurchaseHistoryItem(purchase: MembershipPurchase) {
 fun ProductSaleHistoryItem(sale: ProductSale) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = GymSurfaceWhite),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
@@ -459,8 +501,8 @@ fun ProductSaleHistoryItem(sale: ProductSale) {
             Icon(Icons.Default.ShoppingBag, contentDescription = null, tint = GymAmberAlert)
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("${sale.productName} (x${sale.quantity})", style = MaterialTheme.typography.titleMedium, color = GymTextPrimary)
-                Text("${sale.totalPrice.toInt()} ₽ (${if (sale.paymentMethod == "cash") "Наличные" else "Карта"})", style = MaterialTheme.typography.bodySmall, color = GymGreenSuccess)
+                Text("${sale.productName} (x${sale.quantity})", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text("${sale.totalPrice.toInt()} сомони (${if (sale.paymentMethod == "cash") "Наличные" else "Карта"})", style = MaterialTheme.typography.bodySmall, color = GymGreenSuccess)
             }
         }
     }
@@ -472,7 +514,7 @@ fun EmptyStateText(text: String) {
         modifier = Modifier.fillMaxWidth().padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = text, style = MaterialTheme.typography.bodyMedium, color = GymTextMuted)
+        Text(text = text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -489,8 +531,8 @@ fun PurchaseTariffModal(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = GymSurfaceWhite,
-        title = { Text("Оформление абонемента", color = GymTextPrimary, fontWeight = FontWeight.Bold) },
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = { Text("Оформление абонемента", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -498,14 +540,14 @@ fun PurchaseTariffModal(
             ) {
                 Text("Клиент: ${client.fullName}", style = MaterialTheme.typography.bodyMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
 
-                Text("Выберите тариф:", style = MaterialTheme.typography.labelMedium, color = GymTextSecondary)
+                Text("Выберите тариф:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                 membershipTypes.forEach { type ->
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (selectedTypeId == type.id) GymIndigoContainer else GymBgLight)
+                            .background(if (selectedTypeId == type.id) GymIndigoContainer else MaterialTheme.colorScheme.surfaceVariant)
                             .padding(12.dp),
                         onClick = { selectedTypeId = type.id }
                     ) {
@@ -518,14 +560,14 @@ fun PurchaseTariffModal(
                                 Text(type.name, style = MaterialTheme.typography.titleSmall, color = GymTextPrimary, fontWeight = FontWeight.Bold)
                                 Text("${type.durationValue} ${if (type.durationType == "visits") "визитов" else "дней"}", style = MaterialTheme.typography.bodySmall, color = GymTextSecondary)
                             }
-                            Text("${type.price.toInt()} ₽", style = MaterialTheme.typography.titleMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
+                            Text("${type.price.toInt()} сомони", style = MaterialTheme.typography.titleMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Text("Способ оплаты:", style = MaterialTheme.typography.labelMedium, color = GymTextSecondary)
+                Text("Способ оплаты:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = paymentMethod == "card",
@@ -558,7 +600,7 @@ fun PurchaseTariffModal(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена", color = GymTextSecondary) }
+            TextButton(onClick = onDismiss) { Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     )
 }
@@ -579,8 +621,8 @@ fun SellProductModal(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = GymSurfaceWhite,
-        title = { Text("Продажа товара клиенту", color = GymTextPrimary, fontWeight = FontWeight.Bold) },
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = { Text("Продажа товара клиенту", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -588,7 +630,7 @@ fun SellProductModal(
             ) {
                 Text("Клиент: ${client.fullName}", style = MaterialTheme.typography.bodyMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
 
-                Text("Выберите товар:", style = MaterialTheme.typography.labelMedium, color = GymTextSecondary)
+                Text("Выберите товар:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                 LazyColumn(
                     modifier = Modifier.heightIn(max = 180.dp),
@@ -599,7 +641,7 @@ fun SellProductModal(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (selectedProductId == prod.id) GymIndigoContainer else GymBgLight)
+                                .background(if (selectedProductId == prod.id) GymIndigoContainer else MaterialTheme.colorScheme.surfaceVariant)
                                 .padding(10.dp),
                             onClick = { selectedProductId = prod.id }
                         ) {
@@ -608,7 +650,7 @@ fun SellProductModal(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(prod.name, style = MaterialTheme.typography.bodyMedium, color = GymTextPrimary, fontWeight = FontWeight.Bold)
-                                Text("${prod.price.toInt()} ₽", style = MaterialTheme.typography.bodyMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
+                                Text("${prod.price.toInt()} сомони", style = MaterialTheme.typography.bodyMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -619,26 +661,26 @@ fun SellProductModal(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Количество:", color = GymTextSecondary)
+                    Text("Количество:", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = { if (quantity > 1) quantity-- }) {
-                            Icon(Icons.Default.Remove, contentDescription = null, tint = GymTextPrimary)
+                            Icon(Icons.Default.Remove, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
                         }
-                        Text("$quantity", style = MaterialTheme.typography.titleMedium, color = GymTextPrimary, fontWeight = FontWeight.Bold)
+                        Text("$quantity", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                         IconButton(onClick = { quantity++ }) {
-                            Icon(Icons.Default.Add, contentDescription = null, tint = GymTextPrimary)
+                            Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
                         }
                     }
                 }
 
                 val total = (currentProduct?.price ?: 0.0) * quantity
                 Text(
-                    text = "Итого к оплате: ${total.toInt()} ₽",
+                    text = "Итого к оплате: ${total.toInt()} сомони",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = GymPrimaryIndigo
                 )
 
-                Text("Способ оплаты:", style = MaterialTheme.typography.labelMedium, color = GymTextSecondary)
+                Text("Способ оплаты:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = paymentMethod == "cash",
@@ -671,9 +713,7 @@ fun SellProductModal(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена", color = GymTextSecondary) }
+            TextButton(onClick = onDismiss) { Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     )
 }
-
-fun String?.isNull_or_blank(): Boolean = this == null || this.isBlank()

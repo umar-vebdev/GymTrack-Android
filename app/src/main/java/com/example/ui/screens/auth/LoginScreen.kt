@@ -1,6 +1,5 @@
 package com.example.ui.screens.auth
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -30,7 +28,7 @@ fun LoginScreen(viewModel: GymViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(GymBgLight),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Card(
@@ -38,7 +36,7 @@ fun LoginScreen(viewModel: GymViewModel) {
                 .fillMaxWidth(0.9f)
                 .widthIn(max = 480.dp)
                 .padding(16.dp),
-            colors = CardDefaults.cardColors(containerColor = GymSurfaceWhite),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(28.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
@@ -72,13 +70,13 @@ fun LoginScreen(viewModel: GymViewModel) {
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp
                     ),
-                    color = GymTextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Text(
-                    text = "Caspian Fitness Club",
+                    text = "Caspian Fitness Club • Таджикистан",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = GymTextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(28.dp))
@@ -88,14 +86,11 @@ fun LoginScreen(viewModel: GymViewModel) {
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email или телефон сотрудника") },
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = GymTextSecondary) },
+                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = GymBgLight,
-                        focusedContainerColor = GymSurfaceWhite,
-                        unfocusedBorderColor = Color.Transparent,
                         focusedBorderColor = GymPrimaryIndigo
                     )
                 )
@@ -107,16 +102,13 @@ fun LoginScreen(viewModel: GymViewModel) {
                     value = password,
                     onValueChange = { password = it },
                     label = { Text("Пароль") },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = GymTextSecondary) },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     visualTransformation = PasswordVisualTransformation(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = GymBgLight,
-                        focusedContainerColor = GymSurfaceWhite,
-                        unfocusedBorderColor = Color.Transparent,
                         focusedBorderColor = GymPrimaryIndigo
                     )
                 )

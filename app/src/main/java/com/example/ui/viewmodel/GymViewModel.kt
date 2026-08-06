@@ -80,11 +80,14 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
     val products: StateFlow<List<Product>> = combine(productCategoryFilter, productSearchQuery) { cat, q ->
         Pair(cat, q)
     }.flatMapLatest { (cat, q) ->
-        gymRepository.getProducts(cat, q)
+        gymRepository.getProductsAdmin(cat, q)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Membership Types
     val membershipTypes: StateFlow<List<MembershipType>> = gymRepository.getMembershipTypes()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        
+    val membershipTypesAdmin: StateFlow<List<MembershipType>> = gymRepository.getMembershipTypesAdmin()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // History Timeline
@@ -93,8 +96,11 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
         .flatMapLatest { gymRepository.getHistoryEvents(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Dashboard Stats & Reports
-    val dashboardStats: StateFlow<DashboardStats> = gymRepository.getDashboardStats()
+    // Dashboard Stats & Reports with Date Range Filter
+    val analyticsDateFilter = MutableStateFlow("today") // "today", "yesterday", "week", "month", "all", "custom|...|..."
+
+    val dashboardStats: StateFlow<DashboardStats> = analyticsDateFilter
+        .flatMapLatest { filter -> gymRepository.getDashboardStatsFiltered(filter) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DashboardStats(0.0, 0, 0, 0, 0.0, 0.0))
 
     val expiringMemberships: StateFlow<List<ExpiringMembershipInfo>> = gymRepository.getExpiringMemberships(7)
@@ -116,8 +122,12 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
 
     fun login(email: String, pass: String) {
         viewModelScope.launch {
-            authRepository.setAuth("token-${System.currentTimeMillis()}", if (email.contains("@")) email.substringBefore("@") else "Менеджер")
-            _uiMessage.emit("Добро пожаловать в GymTrack!")
+            val result = authRepository.loginOnline(email, pass)
+            result.onSuccess { name ->
+                _uiMessage.emit("Добро пожаловать в GymTrack, $name!")
+            }.onFailure { err ->
+                _uiMessage.emit(err.message ?: "Ошибка входа")
+            }
         }
     }
 
@@ -133,6 +143,17 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
                 _uiMessage.emit(msg)
             }.onFailure { err ->
                 _uiMessage.emit(err.message ?: "Ошибка списывания визита")
+            }
+        }
+    }
+    
+    fun cancelCheckIn(visitId: Long) {
+        viewModelScope.launch {
+            val result = gymRepository.cancelCheckIn(visitId)
+            result.onSuccess {
+                _uiMessage.emit("Визит отменен, количество посещений возвращено!")
+            }.onFailure { err ->
+                _uiMessage.emit(err.message ?: "Ошибка отмены визита")
             }
         }
     }
@@ -163,6 +184,28 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+    
+    fun toggleMembershipTypeActive(id: Long) {
+        viewModelScope.launch {
+            val result = gymRepository.toggleMembershipTypeActive(id)
+            result.onFailure { _uiMessage.emit(it.message ?: "Ошибка") }
+        }
+    }
+
+    fun updateMembershipType(id: Long, name: String, durationType: String, durationValue: Int, price: Double) {
+        viewModelScope.launch {
+            val result = gymRepository.updateMembershipType(id, name, durationType, durationValue, price)
+            result.onFailure { _uiMessage.emit(it.message ?: "Ошибка") }
+        }
+    }
+
+    fun addMembershipType(name: String, durationType: String, durationValue: Int, price: Double) {
+        viewModelScope.launch {
+            val result = gymRepository.addMembershipType(name, durationType, durationValue, price)
+            result.onSuccess { _uiMessage.emit("Тариф создан") }
+                .onFailure { _uiMessage.emit(it.message ?: "Ошибка") }
+        }
+    }
 
     fun sellProduct(clientId: Long, productId: Long, quantity: Int, paymentMethod: String) {
         viewModelScope.launch {
@@ -187,6 +230,24 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
             }.onFailure {
                 _uiMessage.emit("Ошибка добавления товара")
             }
+        }
+    }
+    
+    fun updateProduct(id: Long, name: String, category: String, price: Double, stock: Int) {
+        viewModelScope.launch {
+            if (name.isBlank() || price <= 0) {
+                _uiMessage.emit("Введите правильное название и цену")
+                return@launch
+            }
+            val result = gymRepository.updateProduct(id, name, category, price, stock)
+            result.onFailure { _uiMessage.emit(it.message ?: "Ошибка") }
+        }
+    }
+
+    fun toggleProductActive(id: Long) {
+        viewModelScope.launch {
+            val result = gymRepository.toggleProductActive(id)
+            result.onFailure { _uiMessage.emit(it.message ?: "Ошибка") }
         }
     }
 

@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -37,40 +38,24 @@ fun ClientsScreen(
 
     var showAddClientDialog by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.fillMaxSize().background(GymBgLight)) {
+    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(modifier = Modifier.fillMaxSize()) {
 
-            // Top Search Bar
+            // Compact Elegant Search Header
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = GymSurfaceWhite,
+                color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 1.dp
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    OutlinedTextField(
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    // Sleek Compact Search Field
+                    CompactClientSearchField(
                         value = searchQuery,
                         onValueChange = { viewModel.searchQuery.value = it },
-                        placeholder = { Text("Search client, phone or GT-code...") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = GymTextSecondary) },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.searchQuery.value = "" }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Clear")
-                                }
-                            }
-                        },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = GymBgLight,
-                            unfocusedContainerColor = GymBgLight,
-                            focusedBorderColor = GymPrimaryIndigo,
-                            unfocusedBorderColor = Color.Transparent
-                        )
+                        placeholderText = "Поиск по имени, коду GT или телефону (+992)..."
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     // Filter Chips Row
                     LazyRow(
@@ -81,12 +66,12 @@ fun ClientsScreen(
                             FilterChip(
                                 selected = selectedFilterCategory == "all",
                                 onClick = { viewModel.selectedFilterCategory.value = "all" },
-                                label = { Text("Все клиенты (${clients.size})") },
+                                label = { Text("Все клиенты (${clients.size})", fontSize = 13.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = GymPrimaryIndigo,
                                     selectedLabelColor = Color.White,
-                                    containerColor = GymSurfaceVariant,
-                                    labelColor = GymTextPrimary
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface
                                 )
                             )
                         }
@@ -94,12 +79,12 @@ fun ClientsScreen(
                             FilterChip(
                                 selected = selectedFilterCategory == "visits",
                                 onClick = { viewModel.selectedFilterCategory.value = "visits" },
-                                label = { Text("По визитам") },
+                                label = { Text("По визитам", fontSize = 13.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = GymPrimaryIndigo,
                                     selectedLabelColor = Color.White,
-                                    containerColor = GymSurfaceVariant,
-                                    labelColor = GymTextPrimary
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface
                                 )
                             )
                         }
@@ -107,12 +92,12 @@ fun ClientsScreen(
                             FilterChip(
                                 selected = selectedFilterCategory == "days",
                                 onClick = { viewModel.selectedFilterCategory.value = "days" },
-                                label = { Text("По дням") },
+                                label = { Text("По дням", fontSize = 13.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = GymPrimaryIndigo,
                                     selectedLabelColor = Color.White,
-                                    containerColor = GymSurfaceVariant,
-                                    labelColor = GymTextPrimary
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface
                                 )
                             )
                         }
@@ -120,12 +105,12 @@ fun ClientsScreen(
                             FilterChip(
                                 selected = selectedFilterCategory == "expiring",
                                 onClick = { viewModel.selectedFilterCategory.value = "expiring" },
-                                label = { Text("Истекают / Мало визитов") },
+                                label = { Text("Истекают / Мало визитов", fontSize = 13.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = GymAmberAlert,
                                     selectedLabelColor = Color.White,
-                                    containerColor = GymSurfaceVariant,
-                                    labelColor = GymTextPrimary
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface
                                 )
                             )
                         }
@@ -143,14 +128,14 @@ fun ClientsScreen(
                         Icon(
                             imageVector = Icons.Default.PersonSearch,
                             contentDescription = null,
-                            tint = GymTextMuted,
-                            modifier = Modifier.size(64.dp)
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(56.dp)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "Клиенты не найдены",
                             style = MaterialTheme.typography.titleMedium,
-                            color = GymTextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -174,7 +159,7 @@ fun ClientsScreen(
             onClick = { showAddClientDialog = true },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(24.dp),
+                .padding(20.dp),
             containerColor = GymPrimaryIndigo,
             contentColor = Color.White
         ) {
@@ -194,6 +179,65 @@ fun ClientsScreen(
 }
 
 @Composable
+fun CompactClientSearchField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholderText: String
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(44.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(modifier = Modifier.weight(1f)) {
+                if (value.isEmpty()) {
+                    Text(
+                        text = placeholderText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            if (value.isNotEmpty()) {
+                IconButton(
+                    onClick = { onValueChange("") },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Clear",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun LazyLazyClientsList(
     clients: List<Client>,
     selectedClientId: Long?,
@@ -203,7 +247,7 @@ fun LazyLazyClientsList(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         items(clients, key = { it.id }) { client ->
             ClientCardItem(
@@ -230,20 +274,20 @@ fun ClientCardItem(
             .fillMaxWidth()
             .clickable { onClick() }
             .then(
-                if (isSelected) Modifier.border(2.dp, GymPrimaryIndigo, RoundedCornerShape(20.dp))
+                if (isSelected) Modifier.border(2.dp, GymPrimaryIndigo, RoundedCornerShape(16.dp))
                 else Modifier
             ),
-        colors = CardDefaults.cardColors(containerColor = GymSurfaceWhite),
-        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Client Avatar Circle with Initials
+            // Client Avatar Initials
             val initials = client.fullName
                 .split(" ")
                 .take(2)
@@ -252,7 +296,7 @@ fun ClientCardItem(
 
             Box(
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(46.dp)
                     .clip(CircleShape)
                     .background(GymIndigoContainer),
                 contentAlignment = Alignment.Center
@@ -264,7 +308,7 @@ fun ClientCardItem(
                 )
             }
 
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             // Client Info
             Column(modifier = Modifier.weight(1f)) {
@@ -272,33 +316,32 @@ fun ClientCardItem(
                     Text(
                         text = client.fullName,
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = GymTextPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f, fill = false)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    // Client Code Badge
                     Surface(
                         color = GymIndigoContainer,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(6.dp)
                     ) {
                         Text(
                             text = client.clientCode,
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             color = GymIndigoOnContainer,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
                     text = client.phone,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = GymTextSecondary
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 // Tariff Status Badge
                 if (active != null) {
@@ -312,34 +355,34 @@ fun ClientCardItem(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(8.dp)
+                                .size(6.dp)
                                 .clip(CircleShape)
                                 .background(statusColor)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = text,
-                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
                             color = statusColor
                         )
                     }
                 } else {
                     Text(
                         text = "Нет активного абонемента",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelSmall,
                         color = GymRoseAlert
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
-            // Quick Check-in Button right on the card!
+            // Quick Check-in Button
             Button(
                 onClick = onDeductVisit,
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = "−1",
@@ -357,17 +400,17 @@ fun AddClientDialog(
     onAddClient: (String, String, String?) -> Unit
 ) {
     var fullName by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("+7 ") }
+    var phone by remember { mutableStateOf("+992 ") }
     var note by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = GymSurfaceWhite,
+        containerColor = MaterialTheme.colorScheme.surface,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.PersonAdd, contentDescription = null, tint = GymPrimaryIndigo)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Новый клиент", color = GymTextPrimary)
+                Text("Новый клиент", color = MaterialTheme.colorScheme.onSurface)
             }
         },
         text = {
@@ -381,34 +424,22 @@ fun AddClientDialog(
                     label = { Text("ФИО Клиента *") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = GymBgLight,
-                        focusedContainerColor = GymSurfaceWhite
-                    )
+                    shape = RoundedCornerShape(12.dp)
                 )
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
-                    label = { Text("Номер телефона *") },
+                    label = { Text("Номер телефона (Таджикистан) *") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = GymBgLight,
-                        focusedContainerColor = GymSurfaceWhite
-                    )
+                    shape = RoundedCornerShape(12.dp)
                 )
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
                     label = { Text("Заметка (опционально)") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = GymBgLight,
-                        focusedContainerColor = GymSurfaceWhite
-                    )
+                    shape = RoundedCornerShape(12.dp)
                 )
             }
         },
@@ -423,7 +454,7 @@ fun AddClientDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена", color = GymTextSecondary)
+                Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )

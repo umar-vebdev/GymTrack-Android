@@ -20,19 +20,20 @@ import com.example.ui.screens.analytics.AnalyticsScreen
 import com.example.ui.screens.auth.LoginScreen
 import com.example.ui.screens.clients.ClientDetailScreen
 import com.example.ui.screens.clients.ClientsScreen
+import com.example.ui.screens.home.HomeScreen
 import com.example.ui.screens.journal.JournalScreen
 import com.example.ui.screens.products.ProductsScreen
-import com.example.ui.screens.settings.SettingsScreen
+import com.example.ui.screens.tariffs.TariffsScreen
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.GymViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 enum class NavDestination(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    HOME("Главная", Icons.Default.Home),
     CLIENTS("Клиенты", Icons.Default.People),
     PRODUCTS("Товары", Icons.Default.Storefront),
     JOURNAL("Журнал", Icons.Default.ReceiptLong),
-    ANALYTICS("Аналитика", Icons.Default.Assessment),
-    SETTINGS("Настройки", Icons.Default.Settings)
+    ANALYTICS("Аналитика", Icons.Default.Assessment)
 }
 
 @Composable
@@ -55,18 +56,19 @@ fun AppNavigation(viewModel: GymViewModel) {
     val configuration = LocalConfiguration.current
     val isTablet = configuration.screenWidthDp >= 600
 
-    var currentDestination by remember { mutableStateOf(NavDestination.CLIENTS) }
+    var currentDestination by remember { mutableStateOf(NavDestination.HOME) }
     var phoneShowDetailScreen by remember { mutableStateOf(false) }
+    var showTariffsScreen by remember { mutableStateOf(false) }
 
     val selectedClient by viewModel.selectedClient.collectAsState()
 
     Scaffold(
-        containerColor = GymBgLight,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (!isTablet) {
                 NavigationBar(
-                    containerColor = GymSurfaceWhite,
-                    contentColor = GymPrimaryIndigo
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary
                 ) {
                     NavDestination.entries.forEach { dest ->
                         NavigationBarItem(
@@ -74,6 +76,7 @@ fun AppNavigation(viewModel: GymViewModel) {
                             onClick = {
                                 currentDestination = dest
                                 phoneShowDetailScreen = false
+                                showTariffsScreen = false
                             },
                             icon = { Icon(dest.icon, contentDescription = dest.label) },
                             label = { Text(dest.label) },
@@ -81,8 +84,8 @@ fun AppNavigation(viewModel: GymViewModel) {
                                 selectedIconColor = GymPrimaryIndigo,
                                 selectedTextColor = GymPrimaryIndigo,
                                 indicatorColor = GymIndigoContainer,
-                                unselectedIconColor = GymTextSecondary,
-                                unselectedTextColor = GymTextSecondary
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         )
                     }
@@ -98,7 +101,7 @@ fun AppNavigation(viewModel: GymViewModel) {
             // Tablet Left Navigation Rail
             if (isTablet) {
                 NavigationRail(
-                    containerColor = GymSurfaceWhite,
+                    containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = GymPrimaryIndigo,
                     header = {
                         Column(
@@ -115,7 +118,7 @@ fun AppNavigation(viewModel: GymViewModel) {
                             Text(
                                 text = "GymTrack",
                                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                                color = GymTextPrimary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     },
@@ -132,8 +135,8 @@ fun AppNavigation(viewModel: GymViewModel) {
                                 selectedIconColor = GymPrimaryIndigo,
                                 selectedTextColor = GymPrimaryIndigo,
                                 indicatorColor = GymIndigoContainer,
-                                unselectedIconColor = GymTextSecondary,
-                                unselectedTextColor = GymTextSecondary
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         )
                     }
@@ -142,7 +145,25 @@ fun AppNavigation(viewModel: GymViewModel) {
 
             // Main Content Area
             Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                when (currentDestination) {
+                if (showTariffsScreen) {
+                    TariffsScreen(
+                        viewModel = viewModel,
+                        onBackClick = { showTariffsScreen = false }
+                    )
+                } else {
+                    when (currentDestination) {
+                        NavDestination.HOME -> HomeScreen(
+                            viewModel = viewModel,
+                            onNavigate = { route ->
+                                when (route) {
+                                    "CLIENTS" -> currentDestination = NavDestination.CLIENTS
+                                    "PRODUCTS" -> currentDestination = NavDestination.PRODUCTS
+                                    "JOURNAL" -> currentDestination = NavDestination.JOURNAL
+                                    "ANALYTICS" -> currentDestination = NavDestination.ANALYTICS
+                                    "TARIFFS" -> showTariffsScreen = true
+                                }
+                            }
+                        )
                     NavDestination.CLIENTS -> {
                         if (isTablet) {
                             // Split Master-Detail Layout for Tablet
@@ -153,7 +174,7 @@ fun AppNavigation(viewModel: GymViewModel) {
                                     modifier = Modifier.weight(0.42f)
                                 )
 
-                                VerticalDivider(color = GymCardBorder, thickness = 1.dp)
+                                VerticalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
 
                                 ClientDetailScreen(
                                     viewModel = viewModel,
@@ -183,7 +204,7 @@ fun AppNavigation(viewModel: GymViewModel) {
                     NavDestination.PRODUCTS -> ProductsScreen(viewModel = viewModel)
                     NavDestination.JOURNAL -> JournalScreen(viewModel = viewModel)
                     NavDestination.ANALYTICS -> AnalyticsScreen(viewModel = viewModel)
-                    NavDestination.SETTINGS -> SettingsScreen(viewModel = viewModel)
+                }
                 }
             }
         }

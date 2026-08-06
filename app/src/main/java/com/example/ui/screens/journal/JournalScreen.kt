@@ -27,16 +27,16 @@ fun JournalScreen(
     val events by viewModel.historyEvents.collectAsState()
     val currentFilter by viewModel.historyTypeFilter.collectAsState()
 
-    Box(modifier = modifier.fillMaxSize().background(GymBgLight)) {
+    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(modifier = Modifier.fillMaxSize()) {
 
             // Top Header & Filters
-            Surface(color = GymSurfaceWhite, shadowElevation = 1.dp) {
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = "Единый журнал событий",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = GymTextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -53,8 +53,8 @@ fun JournalScreen(
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = GymPrimaryIndigo,
                                     selectedLabelColor = Color.White,
-                                    containerColor = GymSurfaceVariant,
-                                    labelColor = GymTextPrimary
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface
                                 )
                             )
                         }
@@ -66,8 +66,8 @@ fun JournalScreen(
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = GymPrimaryIndigo,
                                     selectedLabelColor = Color.White,
-                                    containerColor = GymSurfaceVariant,
-                                    labelColor = GymTextPrimary
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface
                                 )
                             )
                         }
@@ -79,8 +79,8 @@ fun JournalScreen(
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = GymPrimaryIndigo,
                                     selectedLabelColor = Color.White,
-                                    containerColor = GymSurfaceVariant,
-                                    labelColor = GymTextPrimary
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface
                                 )
                             )
                         }
@@ -92,8 +92,8 @@ fun JournalScreen(
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = GymPrimaryIndigo,
                                     selectedLabelColor = Color.White,
-                                    containerColor = GymSurfaceVariant,
-                                    labelColor = GymTextPrimary
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurface
                                 )
                             )
                         }
@@ -104,7 +104,7 @@ fun JournalScreen(
             // Events Timeline
             if (events.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Событий не найдено", style = MaterialTheme.typography.titleMedium, color = GymTextSecondary)
+                    Text("Событий не найдено", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 LazyColumn(
@@ -125,7 +125,7 @@ fun JournalScreen(
 fun HistoryEventCard(event: HistoryEvent) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = GymSurfaceWhite),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(14.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -144,16 +144,16 @@ fun HistoryEventCard(event: HistoryEvent) {
             Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(event.title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = GymTextPrimary)
+                Text(event.title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(2.dp))
                 Text("Клиент: ${event.clientName}", style = MaterialTheme.typography.bodySmall, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
-                Text(event.description, style = MaterialTheme.typography.bodySmall, color = GymTextSecondary)
+                Text(event.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             if (event.amount != null) {
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("+${event.amount?.toInt()} ₽", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = GymGreenSuccess)
-                    Text(if (event.paymentMethod == "cash") "Наличные" else "Карта", style = MaterialTheme.typography.labelSmall, color = GymTextMuted)
+                    Text("+${event.amount?.toInt()} сомони", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = GymGreenSuccess)
+                    Text(if (event.paymentMethod == "cash") "Наличные" else "Карта", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

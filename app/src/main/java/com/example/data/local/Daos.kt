@@ -36,12 +36,18 @@ interface ClientDao {
 interface MembershipDao {
     @Query("SELECT * FROM membership_types WHERE isActive = 1")
     fun getAllMembershipTypes(): Flow<List<MembershipTypeEntity>>
+    
+    @Query("SELECT * FROM membership_types ORDER BY isActive DESC, name ASC")
+    fun getAllMembershipTypesAdmin(): Flow<List<MembershipTypeEntity>>
 
     @Query("SELECT * FROM membership_types WHERE id = :id LIMIT 1")
     suspend fun getMembershipTypeById(id: Long): MembershipTypeEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMembershipType(type: MembershipTypeEntity): Long
+
+    @Update
+    suspend fun updateMembershipType(type: MembershipTypeEntity)
 
     @Query("SELECT * FROM membership_purchases WHERE clientId = :clientId ORDER BY createdAt DESC")
     fun getPurchasesForClient(clientId: Long): Flow<List<MembershipPurchaseEntity>>
@@ -51,6 +57,9 @@ interface MembershipDao {
 
     @Query("SELECT * FROM membership_purchases ORDER BY createdAt DESC")
     fun getAllPurchases(): Flow<List<MembershipPurchaseEntity>>
+
+    @Query("SELECT * FROM membership_purchases WHERE id = :id LIMIT 1")
+    suspend fun getPurchaseById(id: Long): MembershipPurchaseEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPurchase(purchase: MembershipPurchaseEntity): Long
@@ -67,6 +76,9 @@ interface ProductDao {
     @Query("SELECT * FROM products WHERE isActive = 1 ORDER BY category ASC, name ASC")
     fun getAllProducts(): Flow<List<ProductEntity>>
 
+    @Query("SELECT * FROM products ORDER BY isActive DESC, category ASC, name ASC")
+    fun getAllProductsAdmin(): Flow<List<ProductEntity>>
+
     @Query("""
         SELECT * FROM products 
         WHERE isActive = 1 
@@ -74,6 +86,13 @@ interface ProductDao {
         ORDER BY name ASC
     """)
     fun searchProducts(query: String): Flow<List<ProductEntity>>
+    
+    @Query("""
+        SELECT * FROM products 
+        WHERE (name LIKE '%' || :query || '%' OR category LIKE '%' || :query || '%')
+        ORDER BY isActive DESC, name ASC
+    """)
+    fun searchProductsAdmin(query: String): Flow<List<ProductEntity>>
 
     @Query("SELECT * FROM products WHERE id = :id LIMIT 1")
     suspend fun getProductById(id: Long): ProductEntity?
@@ -104,6 +123,12 @@ interface VisitDao {
 
     @Query("SELECT * FROM visits ORDER BY visitedAt DESC")
     fun getAllVisits(): Flow<List<VisitEntity>>
+    
+    @Query("SELECT * FROM visits WHERE id = :id LIMIT 1")
+    suspend fun getVisitById(id: Long): VisitEntity?
+
+    @Query("DELETE FROM visits WHERE id = :id")
+    suspend fun deleteVisit(id: Long)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertVisit(visit: VisitEntity): Long

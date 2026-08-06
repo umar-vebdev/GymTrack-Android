@@ -157,6 +157,23 @@ class GymRepository(private val db: GymDatabase) {
         }
     }
 
+    suspend fun cancelCheckIn(visitId: Long): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val visit = visitDao.getVisitById(visitId) ?: return@withContext Result.failure(Exception("Визит не найден"))
+            val purchase = membershipDao.getPurchaseById(visit.membershipPurchaseId)
+            
+            if (purchase != null && purchase.visitsLeft != null) {
+                // Return 1 visit
+                membershipDao.updatePurchase(purchase.copy(visitsLeft = purchase.visitsLeft + 1))
+            }
+            
+            visitDao.deleteVisit(visitId)
+            Result.success(Unit)
+        } catch(e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // 3. MEMBERSHIPS & PURCHASES
     fun getMembershipTypes(): Flow<List<MembershipType>> {
         return membershipDao.getAllMembershipTypes().map { list ->
@@ -166,9 +183,58 @@ class GymRepository(private val db: GymDatabase) {
                     name = it.name,
                     durationType = it.durationType,
                     durationValue = it.durationValue,
-                    price = it.price
+                    price = it.price,
+                    isActive = it.isActive
                 )
             }
+        }
+    }
+
+    fun getMembershipTypesAdmin(): Flow<List<MembershipType>> {
+        return membershipDao.getAllMembershipTypesAdmin().map { list ->
+            list.map {
+                MembershipType(
+                    id = it.id,
+                    name = it.name,
+                    durationType = it.durationType,
+                    durationValue = it.durationValue,
+                    price = it.price,
+                    isActive = it.isActive
+                )
+            }
+        }
+    }
+
+    suspend fun addMembershipType(name: String, durationType: String, durationValue: Int, price: Double): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            membershipDao.insertMembershipType(MembershipTypeEntity(
+                name = name, durationType = durationType, durationValue = durationValue, price = price
+            ))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    suspend fun toggleMembershipTypeActive(id: Long): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val m = membershipDao.getMembershipTypeById(id) ?: return@withContext Result.failure(Exception("Тариф не найден"))
+            membershipDao.updateMembershipType(m.copy(isActive = !m.isActive))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateMembershipType(id: Long, name: String, durationType: String, durationValue: Int, price: Double): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val m = membershipDao.getMembershipTypeById(id) ?: return@withContext Result.failure(Exception("Тариф не найден"))
+            membershipDao.updateMembershipType(m.copy(
+                name = name, durationType = durationType, durationValue = durationValue, price = price
+            ))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
@@ -218,7 +284,7 @@ class GymRepository(private val db: GymDatabase) {
     }
 
     fun getClientPurchases(clientId: Long): Flow<List<MembershipPurchase>> {
-        return combine(membershipDao.getPurchasesForClient(clientId), membershipDao.getAllMembershipTypes()) { purchases, types ->
+        return combine(membershipDao.getPurchasesForClient(clientId), membershipDao.getAllMembershipTypesAdmin()) { purchases, types ->
             val typeMap = types.associateBy { it.id }
             purchases.map { p ->
                 val t = typeMap[p.membershipTypeId]
@@ -257,6 +323,27 @@ class GymRepository(private val db: GymDatabase) {
         }
     }
 
+    fun getProductsAdmin(category: String? = null, query: String = ""): Flow<List<Product>> {
+        val flow = if (query.isBlank()) productDao.getAllProductsAdmin() else productDao.searchProductsAdmin(query)
+        return flow.map { list ->
+            list.filter { 
+                category == null || 
+                category == "all" || 
+                (category == "inactive" && !it.isActive) ||
+                it.category.equals(category, ignoreCase = true) 
+            }.map {
+                    Product(
+                        id = it.id,
+                        name = it.name,
+                        category = it.category,
+                        price = it.price,
+                        stockQuantity = it.stockQuantity,
+                        isActive = it.isActive
+                    )
+                }
+        }
+    }
+
     suspend fun addProduct(name: String, category: String, price: Double, stock: Int): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val product = ProductEntity(
@@ -266,6 +353,26 @@ class GymRepository(private val db: GymDatabase) {
                 stockQuantity = stock
             )
             productDao.insertProduct(product)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateProduct(id: Long, name: String, category: String, price: Double, stock: Int): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val p = productDao.getProductById(id) ?: return@withContext Result.failure(Exception("Товар не найден"))
+            productDao.updateProduct(p.copy(name = name.trim(), category = category, price = price, stockQuantity = stock))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun toggleProductActive(id: Long): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val p = productDao.getProductById(id) ?: return@withContext Result.failure(Exception("Товар не найден"))
+            productDao.updateProduct(p.copy(isActive = !p.isActive))
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -340,7 +447,7 @@ class GymRepository(private val db: GymDatabase) {
         val flow1 = combine(visitDao.getAllVisits(), saleDao.getAllSales(), membershipDao.getAllPurchases()) { visits, sales, purchases ->
             Triple(visits, sales, purchases)
         }
-        val flow2 = combine(clientDao.getAllClients(), productDao.getAllProducts(), membershipDao.getAllMembershipTypes()) { clients, products, mTypes ->
+        val flow2 = combine(clientDao.getAllClients(), productDao.getAllProductsAdmin(), membershipDao.getAllMembershipTypesAdmin()) { clients, products, mTypes ->
             Triple(clients, products, mTypes)
         }
 
@@ -406,34 +513,70 @@ class GymRepository(private val db: GymDatabase) {
         }
     }
 
-    // 6. DASHBOARD & ANALYTICS
-    fun getDashboardStats(): Flow<DashboardStats> {
+    // 6. DASHBOARD & ANALYTICS WITH DATE RANGE FILTER
+    fun getDashboardStatsFiltered(rangeType: String = "today"): Flow<DashboardStats> {
         val todayStr = dayFormat.format(Date())
+
+        val cal = Calendar.getInstance()
+        cal.time = Date()
+        cal.add(Calendar.DAY_OF_YEAR, -1)
+        val yesterdayStr = dayFormat.format(cal.time)
+
+        cal.time = Date()
+        cal.add(Calendar.DAY_OF_YEAR, -7)
+        val weekAgoStr = dayFormat.format(cal.time)
+
+        cal.time = Date()
+        cal.add(Calendar.DAY_OF_YEAR, -30)
+        val monthAgoStr = dayFormat.format(cal.time)
+
         return combine(
             visitDao.getAllVisits(),
             saleDao.getAllSales(),
             membershipDao.getAllPurchases()
         ) { visits, sales, purchases ->
-            val todayVisits = visits.count { it.visitedAt.startsWith(todayStr) }
-            
-            val todaySales = sales.filter { it.createdAt.startsWith(todayStr) }
-            val todaySalesRevenue = todaySales.sumOf { it.totalPrice }
+            val filterDatePredicate: (String) -> Boolean = { dateStrText ->
+                val dateStr = if (dateStrText.length >= 10) dateStrText.substring(0, 10) else dateStrText
+                if (rangeType.startsWith("custom|")) {
+                    val parts = rangeType.split("|")
+                    if (parts.size == 3) {
+                        val start = parts[1]
+                        val end = parts[2]
+                        if (start.isNotBlank() && end.isNotBlank()) {
+                            dateStr in start..end
+                        } else true
+                    } else true
+                } else {
+                    when (rangeType) {
+                        "yesterday" -> dateStr == yesterdayStr
+                        "week" -> dateStr >= weekAgoStr
+                        "month" -> dateStr >= monthAgoStr
+                        "all" -> true
+                        else -> dateStr == todayStr
+                    }
+                }
+            }
 
-            val todayPurchases = purchases.filter { it.createdAt.startsWith(todayStr) }
-            val todayPurchasesRevenue = todayPurchases.sumOf { it.amountPaid }
+            val filteredVisits = visits.count { filterDatePredicate(it.visitedAt) }
 
-            val totalRevenue = todaySalesRevenue + todayPurchasesRevenue
+            val filteredSales = sales.filter { filterDatePredicate(it.createdAt) }
+            val salesRevenue = filteredSales.sumOf { it.totalPrice }
 
-            val cashRevenue = todaySales.filter { it.paymentMethod == "cash" }.sumOf { it.totalPrice } +
-                    todayPurchases.filter { it.paymentMethod == "cash" }.sumOf { it.amountPaid }
+            val filteredPurchases = purchases.filter { filterDatePredicate(it.createdAt) }
+            val purchasesRevenue = filteredPurchases.sumOf { it.amountPaid }
 
-            val cardRevenue = todaySales.filter { it.paymentMethod == "card" }.sumOf { it.totalPrice } +
-                    todayPurchases.filter { it.paymentMethod == "card" }.sumOf { it.amountPaid }
+            val totalRevenue = salesRevenue + purchasesRevenue
+
+            val cashRevenue = filteredSales.filter { it.paymentMethod == "cash" }.sumOf { it.totalPrice } +
+                    filteredPurchases.filter { it.paymentMethod == "cash" }.sumOf { it.amountPaid }
+
+            val cardRevenue = filteredSales.filter { it.paymentMethod == "card" }.sumOf { it.totalPrice } +
+                    filteredPurchases.filter { it.paymentMethod == "card" }.sumOf { it.amountPaid }
 
             DashboardStats(
                 todayRevenue = totalRevenue,
-                todayVisits = todayVisits,
-                todaySalesCount = todaySales.size,
+                todayVisits = filteredVisits,
+                todaySalesCount = filteredSales.size,
                 activeMemberships = purchases.size,
                 cashRevenue = cashRevenue,
                 cardRevenue = cardRevenue
