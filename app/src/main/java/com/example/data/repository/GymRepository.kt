@@ -126,7 +126,7 @@ class GymRepository(private val db: GymDatabase) {
     // 2. CHECK-IN / DEDUCT VISIT (-1 Посещение)
     suspend fun deductVisit(clientId: Long): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val client = clientDao.getClientById(clientId) ?: return@withContext Result.failure(Exception("Клиент не найден"))
+            clientDao.getClientById(clientId) ?: return@withContext Result.failure(Exception("Клиент не найден"))
             val purchases = membershipDao.getPurchasesForClientSync(clientId)
             if (purchases.isEmpty()) {
                 return@withContext Result.failure(Exception("CHECK_IN_FAILED: У клиента нет купленных абонементов!"))

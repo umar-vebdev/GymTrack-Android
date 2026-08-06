@@ -27,7 +27,8 @@ data class MembershipType(
     val name: String,
     val durationType: String, // "visits" or "days"
     val durationValue: Int,
-    val price: Double
+    val price: Double,
+    val isActive: Boolean = true
 )
 
 data class MembershipPurchase(

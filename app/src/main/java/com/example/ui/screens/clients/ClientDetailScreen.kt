@@ -446,7 +446,7 @@ fun VisitHistoryItem(visit: Visit, onCancel: () -> Unit) {
 
 @Composable
 fun PurchaseHistoryItem(purchase: MembershipPurchase, client: Client) {
-    val isActive = client.activeMembership?.id == purchase.id
+    val isActive = client.activeMembership?.purchaseId == purchase.id
 
     Card(
         modifier = Modifier.fillMaxWidth(),
