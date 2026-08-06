@@ -123,6 +123,16 @@ class GymRepository(private val db: GymDatabase) {
         }
     }
 
+    suspend fun deleteClient(id: Long): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val c = clientDao.getClientById(id) ?: return@withContext Result.failure(Exception("Клиент не найден"))
+            clientDao.updateClient(c.copy(isActive = false))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // 2. CHECK-IN / DEDUCT VISIT (-1 Посещение)
     suspend fun deductVisit(clientId: Long): Result<String> = withContext(Dispatchers.IO) {
         try {
@@ -146,11 +156,11 @@ class GymRepository(private val db: GymDatabase) {
                 val newVisitsLeft = validPurchase.visitsLeft - 1
                 membershipDao.updatePurchase(validPurchase.copy(visitsLeft = newVisitsLeft))
                 visitDao.insertVisit(VisitEntity(clientId = clientId, membershipPurchaseId = validPurchase.id, visitedAt = nowStr))
-                Result.success("Чек-ин успешен! Списано 1 посещение. Осталось: $newVisitsLeft")
+                Result.success("Успешная отметка! Списано 1 посещение. Осталось: $newVisitsLeft")
             } else {
                 // Unlimited days membership
                 visitDao.insertVisit(VisitEntity(clientId = clientId, membershipPurchaseId = validPurchase.id, visitedAt = nowStr))
-                Result.success("Чек-ин успешен! Безлимитный визит зафиксирован.")
+                Result.success("Успешная отметка! Безлимитный визит зафиксирован.")
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -443,7 +453,21 @@ class GymRepository(private val db: GymDatabase) {
     }
 
     // 5. GLOBAL JOURNAL (POLYMORPHIC HISTORY STREAM)
-    fun getHistoryEvents(filterType: String = "all"): Flow<List<HistoryEvent>> {
+    fun getHistoryEvents(filterType: String = "all", dateFilter: String = "all"): Flow<List<HistoryEvent>> {
+        val todayStr = dayFormat.format(Date())
+
+        val cal = Calendar.getInstance()
+        cal.time = Date()
+        cal.add(Calendar.DAY_OF_YEAR, -1)
+        val yesterdayStr = dayFormat.format(cal.time)
+
+        cal.time = Date()
+        cal.add(Calendar.DAY_OF_YEAR, -7)
+        val weekAgoStr = dayFormat.format(cal.time)
+
+        cal.time = Date()
+        cal.add(Calendar.DAY_OF_YEAR, -30)
+        val monthAgoStr = dayFormat.format(cal.time)
         val flow1 = combine(visitDao.getAllVisits(), saleDao.getAllSales(), membershipDao.getAllPurchases()) { visits, sales, purchases ->
             Triple(visits, sales, purchases)
         }
@@ -464,8 +488,8 @@ class GymRepository(private val db: GymDatabase) {
                     events.add(
                         HistoryEvent.VisitEvent(
                             id = "visit_${v.id}",
-                            title = " Посещение зала (Чек-ин)",
-                            description = "Визит зафиксирован в ${formatTimeOnly(v.visitedAt)}",
+                            title = "Посещение зала",
+                            description = "Очно в зале",
                             clientName = c?.fullName ?: "Клиент #${v.clientId}",
                             timestamp = v.visitedAt
                         )
@@ -509,7 +533,30 @@ class GymRepository(private val db: GymDatabase) {
                 }
             }
 
-            events.sortedByDescending { it.timestamp }
+            val filterDatePredicate: (String) -> Boolean = { dateStrText ->
+                val dateStr = if (dateStrText.length >= 10) dateStrText.substring(0, 10) else dateStrText
+                if (dateFilter.startsWith("custom|")) {
+                    val parts = dateFilter.split("|")
+                    if (parts.size == 3) {
+                        val start = parts[1]
+                        val end = parts[2]
+                        if (start.isNotBlank() && end.isNotBlank()) {
+                            dateStr in start..end
+                        } else true
+                    } else true
+                } else {
+                    when (dateFilter) {
+                        "yesterday" -> dateStr == yesterdayStr
+                        "week" -> dateStr >= weekAgoStr
+                        "month" -> dateStr >= monthAgoStr
+                        "all" -> true
+                        else -> dateStr == todayStr
+                    }
+                }
+            }
+
+            events.filter { filterDatePredicate(it.timestamp) }
+                .sortedByDescending { it.timestamp }
         }
     }
 

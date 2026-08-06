@@ -3,6 +3,7 @@ package com.example.ui.screens.clients
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.model.Client
+import com.example.ui.components.CustomDropdownFilter
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.GymViewModel
 
@@ -47,7 +49,7 @@ fun ClientsScreen(
                 color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 1.dp
             ) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                Column(modifier = Modifier.statusBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp)) {
                     // Sleek Compact Search Field
                     CompactClientSearchField(
                         value = searchQuery,
@@ -57,61 +59,41 @@ fun ClientsScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Filter Chips Row
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    // Custom Dropdown & Theme Toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        item {
-                            FilterChip(
-                                selected = selectedFilterCategory == "all",
-                                onClick = { viewModel.selectedFilterCategory.value = "all" },
-                                label = { Text("Все клиенты (${clients.size})", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                        item {
-                            FilterChip(
-                                selected = selectedFilterCategory == "visits",
-                                onClick = { viewModel.selectedFilterCategory.value = "visits" },
-                                label = { Text("По визитам", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                        item {
-                            FilterChip(
-                                selected = selectedFilterCategory == "days",
-                                onClick = { viewModel.selectedFilterCategory.value = "days" },
-                                label = { Text("По дням", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                        item {
-                            FilterChip(
-                                selected = selectedFilterCategory == "expiring",
-                                onClick = { viewModel.selectedFilterCategory.value = "expiring" },
-                                label = { Text("Истекают / Мало визитов", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymAmberAlert,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
+                        CustomDropdownFilter(
+                            options = mapOf(
+                                "all" to "Все клиенты (${clients.size})",
+                                "visits" to "По визитам",
+                                "days" to "По дням",
+                                "expiring" to "Истекают / Мало визитов"
+                            ),
+                            selectedKey = selectedFilterCategory,
+                            onItemSelected = { viewModel.selectedFilterCategory.value = it },
+                            modifier = Modifier.weight(1f).fillMaxHeight()
+                        )
+                        
+                        Spacer(modifier = Modifier.width(12.dp))
+                        
+                        val isSystemDark = isSystemInDarkTheme()
+                        val currentIsDark = viewModel.isDarkMode.collectAsState().value ?: isSystemDark
+
+                        IconButton(
+                            onClick = { viewModel.toggleTheme(isSystemDark) },
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        ) {
+                            Icon(
+                                imageVector = if (currentIsDark) Icons.Default.Brightness7 else Icons.Default.Brightness4,
+                                contentDescription = "Toggle Theme",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
                     }
@@ -378,17 +360,32 @@ fun ClientCardItem(
             Spacer(modifier = Modifier.width(10.dp))
 
             // Quick Check-in Button
-            Button(
-                onClick = onDeductVisit,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = "−1",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
-                    color = Color.White
-                )
+            if (active != null) {
+                Button(
+                    onClick = onDeductVisit,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "−1",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
+                        color = Color.White
+                    )
+                }
+            } else {
+                Button(
+                    onClick = onClick,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "Оформить",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = Color.White
+                    )
+                }
             }
         }
     }
@@ -402,6 +399,9 @@ fun AddClientDialog(
     var fullName by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("+992 ") }
     var note by remember { mutableStateOf("") }
+    var phoneError by remember { mutableStateOf(false) }
+
+    val phoneRegex = Regex("^\\+992 \\d{2} \\d{3} \\d{4}$")
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -428,9 +428,13 @@ fun AddClientDialog(
                 )
                 OutlinedTextField(
                     value = phone,
-                    onValueChange = { phone = it },
-                    label = { Text("Номер телефона (Таджикистан) *") },
+                    onValueChange = { 
+                        phone = it
+                        phoneError = !phone.matches(phoneRegex)
+                    },
+                    label = { Text("Телефон (+992 98 218 3003) *") },
                     singleLine = true,
+                    isError = phoneError && phone.length > 5,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -444,8 +448,16 @@ fun AddClientDialog(
             }
         },
         confirmButton = {
+            val isFormValid = fullName.isNotBlank() && phone.matches(phoneRegex)
             Button(
-                onClick = { onAddClient(fullName, phone, note.ifBlank { null }) },
+                onClick = { 
+                    if (isFormValid) {
+                        onAddClient(fullName, phone, note.ifBlank { null }) 
+                    } else {
+                        phoneError = !phone.matches(phoneRegex)
+                    }
+                },
+                enabled = isFormValid,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo)
             ) {

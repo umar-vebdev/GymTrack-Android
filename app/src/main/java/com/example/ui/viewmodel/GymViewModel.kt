@@ -22,6 +22,14 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
 
     val userName: StateFlow<String> = authRepository.userName
 
+    // Theme State
+    val isDarkMode = MutableStateFlow<Boolean?>(null)
+
+    fun toggleTheme(systemIsDark: Boolean) {
+        val current = isDarkMode.value ?: systemIsDark
+        isDarkMode.value = !current
+    }
+
     // Navigation & Selected Client (for Tablet Split-View or Phone details)
     private val _selectedClientId = MutableStateFlow<Long?>(1L)
     val selectedClientId: StateFlow<Long?> = _selectedClientId.asStateFlow()
@@ -92,9 +100,13 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
 
     // History Timeline
     val historyTypeFilter = MutableStateFlow("all")
-    val historyEvents: StateFlow<List<HistoryEvent>> = historyTypeFilter
-        .flatMapLatest { gymRepository.getHistoryEvents(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val historyDateFilter = MutableStateFlow("today")
+
+    val historyEvents: StateFlow<List<HistoryEvent>> = combine(historyTypeFilter, historyDateFilter) { type, date ->
+        Pair(type, date)
+    }.flatMapLatest { (type, date) ->
+        gymRepository.getHistoryEvents(type, date)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Dashboard Stats & Reports with Date Range Filter
     val analyticsDateFilter = MutableStateFlow("today") // "today", "yesterday", "week", "month", "all", "custom|...|..."
@@ -170,6 +182,18 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
                 _uiMessage.emit("Клиент ${newClient.fullName} создан (${newClient.clientCode})")
             }.onFailure {
                 _uiMessage.emit("Ошибка создания клиента")
+            }
+        }
+    }
+
+    fun deleteClient(id: Long) {
+        viewModelScope.launch {
+            val result = gymRepository.deleteClient(id)
+            result.onSuccess {
+                _uiMessage.emit("Клиент удален")
+                _selectedClientId.value = null
+            }.onFailure {
+                _uiMessage.emit("Ошибка удаления клиента")
             }
         }
     }

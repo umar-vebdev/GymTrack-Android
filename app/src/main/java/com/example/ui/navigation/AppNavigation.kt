@@ -20,7 +20,6 @@ import com.example.ui.screens.analytics.AnalyticsScreen
 import com.example.ui.screens.auth.LoginScreen
 import com.example.ui.screens.clients.ClientDetailScreen
 import com.example.ui.screens.clients.ClientsScreen
-import com.example.ui.screens.home.HomeScreen
 import com.example.ui.screens.journal.JournalScreen
 import com.example.ui.screens.products.ProductsScreen
 import com.example.ui.screens.tariffs.TariffsScreen
@@ -29,11 +28,11 @@ import com.example.ui.viewmodel.GymViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 enum class NavDestination(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    HOME("Главная", Icons.Default.Home),
     CLIENTS("Клиенты", Icons.Default.People),
     PRODUCTS("Товары", Icons.Default.Storefront),
     JOURNAL("Журнал", Icons.Default.ReceiptLong),
-    ANALYTICS("Аналитика", Icons.Default.Assessment)
+    ANALYTICS("Аналитика", Icons.Default.Assessment),
+    TARIFFS("Тарифы", Icons.Default.Settings)
 }
 
 @Composable
@@ -56,9 +55,8 @@ fun AppNavigation(viewModel: GymViewModel) {
     val configuration = LocalConfiguration.current
     val isTablet = configuration.screenWidthDp >= 600
 
-    var currentDestination by remember { mutableStateOf(NavDestination.HOME) }
+    var currentDestination by remember { mutableStateOf(NavDestination.CLIENTS) }
     var phoneShowDetailScreen by remember { mutableStateOf(false) }
-    var showTariffsScreen by remember { mutableStateOf(false) }
 
     val selectedClient by viewModel.selectedClient.collectAsState()
 
@@ -76,7 +74,6 @@ fun AppNavigation(viewModel: GymViewModel) {
                             onClick = {
                                 currentDestination = dest
                                 phoneShowDetailScreen = false
-                                showTariffsScreen = false
                             },
                             icon = { Icon(dest.icon, contentDescription = dest.label) },
                             label = { Text(dest.label) },
@@ -96,7 +93,7 @@ fun AppNavigation(viewModel: GymViewModel) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             // Tablet Left Navigation Rail
             if (isTablet) {
@@ -145,25 +142,7 @@ fun AppNavigation(viewModel: GymViewModel) {
 
             // Main Content Area
             Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                if (showTariffsScreen) {
-                    TariffsScreen(
-                        viewModel = viewModel,
-                        onBackClick = { showTariffsScreen = false }
-                    )
-                } else {
-                    when (currentDestination) {
-                        NavDestination.HOME -> HomeScreen(
-                            viewModel = viewModel,
-                            onNavigate = { route ->
-                                when (route) {
-                                    "CLIENTS" -> currentDestination = NavDestination.CLIENTS
-                                    "PRODUCTS" -> currentDestination = NavDestination.PRODUCTS
-                                    "JOURNAL" -> currentDestination = NavDestination.JOURNAL
-                                    "ANALYTICS" -> currentDestination = NavDestination.ANALYTICS
-                                    "TARIFFS" -> showTariffsScreen = true
-                                }
-                            }
-                        )
+                when (currentDestination) {
                     NavDestination.CLIENTS -> {
                         if (isTablet) {
                             // Split Master-Detail Layout for Tablet
@@ -204,7 +183,10 @@ fun AppNavigation(viewModel: GymViewModel) {
                     NavDestination.PRODUCTS -> ProductsScreen(viewModel = viewModel)
                     NavDestination.JOURNAL -> JournalScreen(viewModel = viewModel)
                     NavDestination.ANALYTICS -> AnalyticsScreen(viewModel = viewModel)
-                }
+                    NavDestination.TARIFFS -> TariffsScreen(
+                        viewModel = viewModel,
+                        onBackClick = { currentDestination = NavDestination.CLIENTS }
+                    )
                 }
             }
         }

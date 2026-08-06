@@ -1,6 +1,7 @@
 package com.example.ui.screens.products
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.model.Client
 import com.example.domain.model.Product
+import com.example.ui.components.CustomDropdownFilter
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.GymViewModel
 
@@ -44,7 +46,7 @@ fun ProductsScreen(
 
             // Search and Category Header
             Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                Column(modifier = Modifier.statusBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp)) {
                     // Sleek Compact Product Search Bar
                     CompactProductSearchField(
                         value = searchQuery,
@@ -54,76 +56,18 @@ fun ProductsScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        item {
-                            FilterChip(
-                                selected = categoryFilter == "all",
-                                onClick = { viewModel.productCategoryFilter.value = "all" },
-                                label = { Text("Все товары", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                        item {
-                            FilterChip(
-                                selected = categoryFilter == "drinks",
-                                onClick = { viewModel.productCategoryFilter.value = "drinks" },
-                                label = { Text("Напитки", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                        item {
-                            FilterChip(
-                                selected = categoryFilter == "supplements",
-                                onClick = { viewModel.productCategoryFilter.value = "supplements" },
-                                label = { Text("Спортпит", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                        item {
-                            FilterChip(
-                                selected = categoryFilter == "equipment",
-                                onClick = { viewModel.productCategoryFilter.value = "equipment" },
-                                label = { Text("Экипировка", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                        item {
-                            FilterChip(
-                                selected = categoryFilter == "inactive",
-                                onClick = { viewModel.productCategoryFilter.value = "inactive" },
-                                label = { Text("Архив", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                    }
+                    CustomDropdownFilter(
+                        options = mapOf(
+                            "all" to "Все товары",
+                            "drinks" to "Напитки",
+                            "supplements" to "Спортпит",
+                            "equipment" to "Экипировка",
+                            "inactive" to "Архив"
+                        ),
+                        selectedKey = categoryFilter,
+                        onItemSelected = { viewModel.productCategoryFilter.value = it },
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    )
                 }
             }
 
@@ -380,26 +324,16 @@ fun AddProductDialog(
                 )
 
                 Text("Категория:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    FilterChip(
-                        selected = category == "drinks",
-                        onClick = { category = "drinks" },
-                        label = { Text("Напитки") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GymPrimaryIndigo, selectedLabelColor = Color.White)
-                    )
-                    FilterChip(
-                        selected = category == "supplements",
-                        onClick = { category = "supplements" },
-                        label = { Text("Спортпит") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GymPrimaryIndigo, selectedLabelColor = Color.White)
-                    )
-                    FilterChip(
-                        selected = category == "equipment",
-                        onClick = { category = "equipment" },
-                        label = { Text("Инвентарь") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GymPrimaryIndigo, selectedLabelColor = Color.White)
-                    )
-                }
+                CustomDropdownFilter(
+                    options = mapOf(
+                        "drinks" to "Напитки",
+                        "supplements" to "Спортпит",
+                        "equipment" to "Инвентарь"
+                    ),
+                    selectedKey = category,
+                    onItemSelected = { category = it },
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                )
             }
         },
         confirmButton = {
@@ -430,85 +364,103 @@ fun EditProductDialog(
     var priceStr by remember { mutableStateOf(product.price.toString()) }
     var stockStr by remember { mutableStateOf(product.stockQuantity.toString()) }
     var category by remember { mutableStateOf(product.category) }
+    var showDeleteWarning by remember { mutableStateOf(false) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text("Настройки товара", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Название товара") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = priceStr,
-                    onValueChange = { priceStr = it },
-                    label = { Text("Цена (сомони)") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = stockStr,
-                    onValueChange = { stockStr = it },
-                    label = { Text("Количество на складе") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
+    if (showDeleteWarning) {
+        AlertDialog(
+            onDismissRequest = { showDeleteWarning = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("Удалить товар?", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) },
+            text = { Text("Вы точно хотите удалить товар «${product.name}» из каталога?", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onToggleActive()
+                        showDeleteWarning = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = GymRoseAlert)
+                ) { Text("Удалить", color = Color.White) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteWarning = false }) { Text("Отмена") }
+            }
+        )
+    } else {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("Настройки товара", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Название товара") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = priceStr,
+                        onValueChange = { priceStr = it },
+                        label = { Text("Цена (сомони)") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = stockStr,
+                        onValueChange = { stockStr = it },
+                        label = { Text("Количество на складе") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                Text("Категория:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    FilterChip(
-                        selected = category == "drinks",
-                        onClick = { category = "drinks" },
-                        label = { Text("Напитки") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GymPrimaryIndigo, selectedLabelColor = Color.White)
+                    Text("Категория:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    CustomDropdownFilter(
+                        options = mapOf(
+                            "drinks" to "Напитки",
+                            "supplements" to "Спортпит",
+                            "equipment" to "Инвентарь"
+                        ),
+                        selectedKey = category,
+                        onItemSelected = { category = it },
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
                     )
-                    FilterChip(
-                        selected = category == "supplements",
-                        onClick = { category = "supplements" },
-                        label = { Text("Спортпит") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GymPrimaryIndigo, selectedLabelColor = Color.White)
-                    )
-                    FilterChip(
-                        selected = category == "equipment",
-                        onClick = { category = "equipment" },
-                        label = { Text("Инвентарь") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GymPrimaryIndigo, selectedLabelColor = Color.White)
-                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = {
+                            if (product.isActive) {
+                                showDeleteWarning = true
+                            } else {
+                                onToggleActive()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = if (product.isActive) GymRoseAlert else GymGreenSuccess)
+                    ) {
+                        Text(if (product.isActive) "Удалить товар" else "Восстановить товар")
+                    }
                 }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = onToggleActive,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = if (product.isActive) GymRoseAlert else GymGreenSuccess)
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val price = priceStr.toDoubleOrNull() ?: product.price
+                        val stock = stockStr.toIntOrNull() ?: product.stockQuantity
+                        onSave(name, category, price, stock)
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo)
                 ) {
-                    Text(if (product.isActive) "Деактивировать товар" else "Активировать товар")
+                    Text("Сохранить", color = Color.White, fontWeight = FontWeight.Bold)
                 }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val price = priceStr.toDoubleOrNull() ?: product.price
-                    val stock = stockStr.toIntOrNull() ?: product.stockQuantity
-                    onSave(name, category, price, stock)
-                },
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo)
-            ) {
-                Text("Сохранить", color = Color.White, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant) } }
-    )
+            },
+            dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant) } }
+        )
+    }
 }
 
 @Composable

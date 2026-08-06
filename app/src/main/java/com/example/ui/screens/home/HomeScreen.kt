@@ -2,6 +2,7 @@ package com.example.ui.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -31,7 +32,7 @@ fun HomeScreen(
 
     Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().statusBarsPadding(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -55,19 +56,39 @@ fun HomeScreen(
                         )
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(GymPrimaryIndigo),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.FitnessCenter,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        val isSystemDark = isSystemInDarkTheme()
+                        val currentIsDark = viewModel.isDarkMode.collectAsState().value ?: isSystemDark
+
+                        IconButton(
+                            onClick = { viewModel.toggleTheme(isSystemDark) },
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        ) {
+                            Icon(
+                                imageVector = if (currentIsDark) Icons.Default.Brightness7 else Icons.Default.Brightness4,
+                                contentDescription = "Toggle Theme",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(GymPrimaryIndigo),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FitnessCenter,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -113,18 +134,6 @@ fun HomeScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Surface(
-                                    color = GymGreenContainer,
-                                    shape = RoundedCornerShape(6.dp)
-                                ) {
-                                    Text(
-                                        text = "Онлайн-авторизация активна • Оффлайн БД",
-                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                        color = GymGreenSuccess,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                                    )
-                                }
                             }
                         }
 
@@ -171,7 +180,7 @@ fun HomeScreen(
                     ) {
                         QuickActionTile(
                             title = "База клиентов",
-                            subtitle = "Чек-ин & Тарифы",
+                            subtitle = "Посещения & Тарифы",
                             icon = Icons.Default.People,
                             accentColor = GymPrimaryIndigo,
                             onClick = { onNavigate("CLIENTS") },
@@ -211,44 +220,7 @@ fun HomeScreen(
                 }
             }
 
-            // Club Info Card
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "О КЛУБЕ & НАСТРОЙКИ",
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        InfoRow(icon = Icons.Default.LocationOn, label = "Локация", value = "Таджикистан, г. Душанбе")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        InfoRow(icon = Icons.Default.MonetizationOn, label = "Валюта системы", value = "Сомони (TJS)")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        InfoRow(icon = Icons.Default.Phone, label = "Поддержка", value = "+992 90 000 0000")
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        OutlinedButton(
-                            onClick = { onNavigate("TARIFFS") },
-                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = GymPrimaryIndigo),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(20.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Управление тарифами (CRUD)", fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
         }
 
         // Logout Confirmation Dialog
@@ -324,12 +296,3 @@ private fun QuickActionTile(
     }
 }
 
-@Composable
-private fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(imageVector = icon, contentDescription = null, tint = GymPrimaryIndigo, modifier = Modifier.size(18.dp))
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = "$label: ", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(text = value, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
-    }
-}

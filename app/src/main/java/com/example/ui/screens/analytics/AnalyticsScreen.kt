@@ -20,7 +20,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.domain.model.DashboardStats
 import com.example.domain.model.ExpiringMembershipInfo
+import com.example.ui.components.CustomDropdownFilter
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.GymViewModel
 import java.text.SimpleDateFormat
@@ -41,7 +43,7 @@ fun AnalyticsScreen(
 
     Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().statusBarsPadding(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -54,90 +56,27 @@ fun AnalyticsScreen(
                         color = MaterialTheme.colorScheme.onBackground
                     )
 
-                    // Date Range Filter Chips
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        item {
-                            FilterChip(
-                                selected = dateFilter == "today",
-                                onClick = { viewModel.analyticsDateFilter.value = "today" },
-                                label = { Text("Сегодня", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                        item {
-                            FilterChip(
-                                selected = dateFilter == "yesterday",
-                                onClick = { viewModel.analyticsDateFilter.value = "yesterday" },
-                                label = { Text("Вчера", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                        item {
-                            FilterChip(
-                                selected = dateFilter == "week",
-                                onClick = { viewModel.analyticsDateFilter.value = "week" },
-                                label = { Text("7 дней", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                        item {
-                            FilterChip(
-                                selected = dateFilter == "month",
-                                onClick = { viewModel.analyticsDateFilter.value = "month" },
-                                label = { Text("30 дней", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                        item {
-                            FilterChip(
-                                selected = dateFilter == "all",
-                                onClick = { viewModel.analyticsDateFilter.value = "all" },
-                                label = { Text("Всё время", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                        item {
-                            FilterChip(
-                                selected = dateFilter.startsWith("custom|"),
-                                onClick = { showDatePicker = true },
-                                label = { Text(if (dateFilter.startsWith("custom|")) "Выбран период" else "Свой период", fontSize = 13.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = GymPrimaryIndigo,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                        }
-                    }
+                    // Date Range Filter Dropdown
+                    CustomDropdownFilter(
+                        options = mapOf(
+                            "today" to "Сегодня",
+                            "yesterday" to "Вчера",
+                            "week" to "7 дней",
+                            "month" to "30 дней",
+                            "all" to "Всё время",
+                            "custom_trigger" to "Свой период..."
+                        ),
+                        selectedKey = if (dateFilter.startsWith("custom|")) "custom_trigger" else dateFilter,
+                        customSelectedLabel = if (dateFilter.startsWith("custom|")) "Свой период" else null,
+                        onItemSelected = { key ->
+                            if (key == "custom_trigger") {
+                                showDatePicker = true
+                            } else {
+                                viewModel.analyticsDateFilter.value = key
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    )
                 }
             }
 

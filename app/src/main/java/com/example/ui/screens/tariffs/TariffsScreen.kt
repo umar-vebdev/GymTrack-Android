@@ -184,83 +184,111 @@ fun TariffDialog(
     var priceStr by remember { mutableStateOf(tariff?.price?.toString() ?: "") }
     var durationType by remember { mutableStateOf(tariff?.durationType ?: "days") }
     var durationValueStr by remember { mutableStateOf(tariff?.durationValue?.toString() ?: "30") }
+    var showDeleteWarning by remember { mutableStateOf(false) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text(if (tariff == null) "Создать тариф" else "Настройки тарифа", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Название тарифа") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = priceStr,
-                    onValueChange = { priceStr = it },
-                    label = { Text("Цена (сомони)") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Text("Тип срока:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    FilterChip(
-                        selected = durationType == "days",
-                        onClick = { durationType = "days" },
-                        label = { Text("Дни") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GymPrimaryIndigo, selectedLabelColor = Color.White)
+    if (showDeleteWarning && tariff != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteWarning = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("Удалить тариф?", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) },
+            text = { Text("Вы точно хотите удалить тариф «${tariff.name}» из списка?", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onToggleActive()
+                        showDeleteWarning = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = GymRoseAlert)
+                ) { Text("Удалить", color = Color.White) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteWarning = false }) { Text("Отмена") }
+            }
+        )
+    } else {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text(if (tariff == null) "Создать тариф" else "Настройки тарифа", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Название тарифа") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    FilterChip(
-                        selected = durationType == "visits",
-                        onClick = { durationType = "visits" },
-                        label = { Text("Визиты") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GymPrimaryIndigo, selectedLabelColor = Color.White)
+                    OutlinedTextField(
+                        value = priceStr,
+                        onValueChange = { priceStr = it },
+                        label = { Text("Цена (сомони)") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
                     )
-                }
+                    
+                    Text("Тип срока:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        FilterChip(
+                            selected = durationType == "days",
+                            onClick = { durationType = "days" },
+                            label = { Text("Дни") },
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GymPrimaryIndigo, selectedLabelColor = Color.White)
+                        )
+                        FilterChip(
+                            selected = durationType == "visits",
+                            onClick = { durationType = "visits" },
+                            label = { Text("Визиты") },
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GymPrimaryIndigo, selectedLabelColor = Color.White)
+                        )
+                    }
 
-                OutlinedTextField(
-                    value = durationValueStr,
-                    onValueChange = { durationValueStr = it },
-                    label = { Text(if (durationType == "days") "Количество дней" else "Количество визитов") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                if (tariff != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = onToggleActive,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = if (tariff.isActive) GymRoseAlert else GymGreenSuccess)
-                    ) {
-                        Text(if (tariff.isActive) "Деактивировать тариф" else "Активировать тариф")
+                    OutlinedTextField(
+                        value = durationValueStr,
+                        onValueChange = { durationValueStr = it },
+                        label = { Text(if (durationType == "days") "Количество дней" else "Количество визитов") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    if (tariff != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = {
+                                if (tariff.isActive) {
+                                    showDeleteWarning = true
+                                } else {
+                                    onToggleActive()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = if (tariff.isActive) GymRoseAlert else GymGreenSuccess)
+                        ) {
+                            Text(if (tariff.isActive) "Удалить тариф" else "Восстановить тариф")
+                        }
                     }
                 }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val price = priceStr.toDoubleOrNull() ?: tariff?.price ?: 0.0
-                    val durationVal = durationValueStr.toIntOrNull() ?: tariff?.durationValue ?: 0
-                    if (name.isNotBlank() && price > 0 && durationVal > 0) {
-                        onSave(name, durationType, durationVal, price)
-                    }
-                },
-                enabled = name.isNotBlank() && priceStr.isNotBlank() && durationValueStr.isNotBlank(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo)
-            ) {
-                Text("Сохранить", color = Color.White, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant) } }
-    )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val price = priceStr.toDoubleOrNull() ?: tariff?.price ?: 0.0
+                        val durationVal = durationValueStr.toIntOrNull() ?: tariff?.durationValue ?: 0
+                        if (name.isNotBlank() && price > 0 && durationVal > 0) {
+                            onSave(name, durationType, durationVal, price)
+                        }
+                    },
+                    enabled = name.isNotBlank() && priceStr.isNotBlank() && durationValueStr.isNotBlank(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo)
+                ) {
+                    Text("Сохранить", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant) } }
+        )
+    }
 }
