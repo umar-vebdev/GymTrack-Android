@@ -33,6 +33,9 @@ interface ClientDao {
 
     @Query("DELETE FROM clients WHERE id = :id")
     suspend fun deleteClient(id: Long)
+
+    @Query("DELETE FROM clients")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -75,6 +78,9 @@ interface MembershipDao {
 
     @Query("SELECT COUNT(*) FROM membership_purchases")
     fun getActiveMembershipsCount(): Flow<Int>
+
+    @Query("DELETE FROM membership_purchases")
+    suspend fun deleteAllPurchases()
 }
 
 @Dao
@@ -123,6 +129,9 @@ interface SaleDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSale(sale: ProductSaleEntity): Long
+
+    @Query("DELETE FROM product_sales")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -144,6 +153,9 @@ interface VisitDao {
 
     @Query("SELECT COUNT(*) FROM visits WHERE visitedAt >= :startOfDay")
     fun getTodayVisitsCount(startOfDay: String): Flow<Int>
+
+    @Query("DELETE FROM visits")
+    suspend fun deleteAll()
 }
 
 @Dao

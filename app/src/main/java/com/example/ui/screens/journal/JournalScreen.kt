@@ -35,6 +35,8 @@ fun JournalScreen(
     val events by viewModel.historyEvents.collectAsState()
     val currentFilters by viewModel.historyTypeFilters.collectAsState()
     val dateFilter by viewModel.historyDateFilter.collectAsState()
+    val selectedCurrency by viewModel.selectedCurrency.collectAsState()
+    val cCode = selectedCurrency?.code ?: "TJS"
 
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -129,7 +131,7 @@ fun JournalScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(events, key = { it.id }) { event ->
-                        EventItemCard(event)
+                        EventItemCard(event, cCode)
                     }
                 }
             }
@@ -148,7 +150,7 @@ fun JournalScreen(
 }
 
 @Composable
-fun EventItemCard(event: HistoryEvent) {
+fun EventItemCard(event: HistoryEvent, currencyCode: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -208,7 +210,7 @@ fun EventItemCard(event: HistoryEvent) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "+ ${event.amount?.toInt()} SM", 
+                        text = "+ ${event.amount?.toInt()} $currencyCode", 
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), 
                         color = MaterialTheme.colorScheme.onSurface
                     )

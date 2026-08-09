@@ -118,7 +118,7 @@ fun AnalyticsScreen(
                             title = "Визиты",
                             value = "${stats.todayVisits} чел.",
                             icon = Icons.Default.CheckCircle,
-                            accentColor = MaterialTheme.colorScheme.secondary,
+                            accentColor = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.weight(1f).fillMaxHeight()
                         )
                     }
@@ -323,13 +323,70 @@ fun CustomDateRangePickerModal(
             TextButton(onClick = onDismiss) {
                 Text("Отмена")
             }
-        }
+        },
+        colors = DatePickerDefaults.colors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         DateRangePicker(
             state = dateRangePickerState,
             title = {
-                Text(text = "Выберите диапазон", modifier = Modifier.padding(16.dp))
-            }
+                Text(
+                    text = "Выберите диапазон", 
+                    modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            headline = {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val startStr = dateRangePickerState.selectedStartDateMillis?.let { 
+                        SimpleDateFormat("dd MMM, yy", Locale.getDefault()).format(Date(it)) 
+                    } ?: "Начало"
+                    
+                    val endStr = dateRangePickerState.selectedEndDateMillis?.let { 
+                        SimpleDateFormat("dd MMM, yy", Locale.getDefault()).format(Date(it)) 
+                    } ?: "Конец"
+                    
+                    Text(
+                        text = startStr, 
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), 
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "—", 
+                        style = MaterialTheme.typography.titleLarge, 
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = endStr, 
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), 
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            },
+            showModeToggle = false,
+            colors = DatePickerDefaults.colors(
+                containerColor = Color.Transparent,
+                titleContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                headlineContentColor = MaterialTheme.colorScheme.onSurface,
+                weekdayContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                subheadContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                yearContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                currentYearContentColor = MaterialTheme.colorScheme.primary,
+                selectedYearContentColor = MaterialTheme.colorScheme.onPrimary,
+                selectedYearContainerColor = MaterialTheme.colorScheme.primary,
+                dayContentColor = MaterialTheme.colorScheme.onSurface,
+                disabledDayContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                selectedDayContentColor = MaterialTheme.colorScheme.onPrimary,
+                selectedDayContainerColor = MaterialTheme.colorScheme.primary,
+                todayContentColor = MaterialTheme.colorScheme.primary,
+                todayDateBorderColor = MaterialTheme.colorScheme.primary,
+                dayInSelectionRangeContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                dayInSelectionRangeContainerColor = MaterialTheme.colorScheme.secondaryContainer
+            )
         )
     }
 }

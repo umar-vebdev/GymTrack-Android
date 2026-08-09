@@ -304,8 +304,18 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deleteCurrency(currency: Currency) {
         viewModelScope.launch {
-            if (currency.isSelected) return@launch // Prevent deleting selected currency
+            if (currency.isSelected) return@launch
             gymRepository.deleteCurrency(currency.id, currency.name, currency.code, currency.isSelected)
+        }
+    }
+
+    fun clearAllData() {
+        viewModelScope.launch {
+            db.clientDao().deleteAll()
+            db.visitDao().deleteAll()
+            db.membershipDao().deleteAllPurchases()
+            db.saleDao().deleteAll()
+            _selectedClientId.value = null
         }
     }
 }

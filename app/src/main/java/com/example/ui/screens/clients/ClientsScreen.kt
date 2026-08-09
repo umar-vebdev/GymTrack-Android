@@ -39,8 +39,13 @@ fun ClientsScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedFilterCategories by viewModel.selectedFilterCategories.collectAsState()
     val selectedClientId by viewModel.selectedClientId.collectAsState()
+    
+    val membershipTypes by viewModel.membershipTypes.collectAsState()
+    val selectedCurrency by viewModel.selectedCurrency.collectAsState()
+    val cCode = selectedCurrency?.code ?: "TJS"
 
     var showAddClientDialog by remember { mutableStateOf(false) }
+    var clientToRenew by remember { mutableStateOf<Client?>(null) }
 
     Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -145,6 +150,9 @@ fun ClientsScreen(
                     },
                     onDeductVisit = { clientId ->
                         viewModel.deductVisit(clientId)
+                    },
+                    onRenewClick = { client ->
+                        clientToRenew = client
                     }
                 )
             }
@@ -168,6 +176,19 @@ fun ClientsScreen(
                 onAddClient = { fullName, phone, note ->
                     viewModel.addClient(fullName, phone, note)
                     showAddClientDialog = false
+                }
+            )
+        }
+
+        if (clientToRenew != null) {
+            SellMembershipDialog(
+                client = clientToRenew!!,
+                membershipTypes = membershipTypes,
+                currencyCode = cCode,
+                onDismiss = { clientToRenew = null },
+                onSell = { typeId, paymentMethod ->
+                    viewModel.purchaseMembership(clientToRenew!!.id, typeId, paymentMethod)
+                    clientToRenew = null
                 }
             )
         }
@@ -237,7 +258,8 @@ fun LazyLazyClientsList(
     clients: List<Client>,
     selectedClientId: Long?,
     onClientClick: (Client) -> Unit,
-    onDeductVisit: (Long) -> Unit
+    onDeductVisit: (Long) -> Unit,
+    onRenewClick: (Client) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -249,7 +271,8 @@ fun LazyLazyClientsList(
                 client = client,
                 isSelected = client.id == selectedClientId,
                 onClick = { onClientClick(client) },
-                onDeductVisit = { onDeductVisit(client.id) }
+                onDeductVisit = { onDeductVisit(client.id) },
+                onRenewClick = { onRenewClick(client) }
             )
         }
     }
@@ -260,7 +283,8 @@ fun ClientCardItem(
     client: Client,
     isSelected: Boolean,
     onClick: () -> Unit,
-    onDeductVisit: () -> Unit
+    onDeductVisit: () -> Unit,
+    onRenewClick: () -> Unit
 ) {
     val active = client.activeMembership
 
@@ -268,10 +292,7 @@ fun ClientCardItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .then(
-                if (isSelected) Modifier.border(2.dp, GymPrimaryIndigo, RoundedCornerShape(12.dp))
-                else Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
-            ),
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp)),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -387,7 +408,7 @@ fun ClientCardItem(
                 }
             } else {
                 Button(
-                    onClick = onClick,
+                    onClick = onRenewClick,
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
@@ -411,9 +432,6 @@ fun AddClientDialog(
     var fullName by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("+992 ") }
     var note by remember { mutableStateOf("") }
-    var phoneError by remember { mutableStateOf(false) }
-
-    val phoneRegex = Regex("^\\+992 \\d{2} \\d{3} \\d{4}$")
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -440,13 +458,9 @@ fun AddClientDialog(
                 )
                 OutlinedTextField(
                     value = phone,
-                    onValueChange = { 
-                        phone = it
-                        phoneError = !phone.matches(phoneRegex)
-                    },
-                    label = { Text("Телефон (+992 98 218 3003) *") },
+                    onValueChange = { phone = it },
+                    label = { Text("Телефон *") },
                     singleLine = true,
-                    isError = phoneError && phone.length > 5,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -460,13 +474,11 @@ fun AddClientDialog(
             }
         },
         confirmButton = {
-            val isFormValid = fullName.isNotBlank() && phone.matches(phoneRegex)
+            val isFormValid = fullName.isNotBlank() && phone.isNotBlank()
             Button(
                 onClick = { 
                     if (isFormValid) {
                         onAddClient(fullName, phone, note.ifBlank { null }) 
-                    } else {
-                        phoneError = !phone.matches(phoneRegex)
                     }
                 },
                 enabled = isFormValid,

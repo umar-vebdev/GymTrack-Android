@@ -34,6 +34,7 @@ fun SettingsScreen(
 
     var passwordVisible by remember { mutableStateOf(false) }
     var showCurrencyDialog by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -239,6 +240,56 @@ fun SettingsScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Опасная зона",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showResetDialog = true }
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DeleteForever,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Сброс данных",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Text(
+                            text = "Удаление клиентов, визитов, абонементов и продаж",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
+                    )
+                }
+            }
         }
     }
 
@@ -249,6 +300,50 @@ fun SettingsScreen(
                 viewModel.addCurrency(name, code)
                 showCurrencyDialog = false
             }
+        )
+    }
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = {
+                Text(
+                    "Сброс всех данных",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    "Это действие нельзя отменить.\n\nБудут удалены все клиенты, история визитов, покупки абонементов и все продажи.",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.clearAllData()
+                        showResetDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Удалить всё", color = androidx.compose.ui.graphics.Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) {
+                    Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 }
