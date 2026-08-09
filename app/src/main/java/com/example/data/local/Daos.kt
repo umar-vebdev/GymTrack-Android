@@ -30,6 +30,9 @@ interface ClientDao {
 
     @Query("SELECT COUNT(*) FROM clients WHERE isActive = 1")
     fun getActiveClientsCount(): Flow<Int>
+
+    @Query("DELETE FROM clients WHERE id = :id")
+    suspend fun deleteClient(id: Long)
 }
 
 @Dao
@@ -48,6 +51,9 @@ interface MembershipDao {
 
     @Update
     suspend fun updateMembershipType(type: MembershipTypeEntity)
+
+    @Query("DELETE FROM membership_types WHERE id = :id")
+    suspend fun deleteMembershipType(id: Long)
 
     @Query("SELECT * FROM membership_purchases WHERE clientId = :clientId ORDER BY createdAt DESC")
     fun getPurchasesForClient(clientId: Long): Flow<List<MembershipPurchaseEntity>>
@@ -102,6 +108,9 @@ interface ProductDao {
 
     @Update
     suspend fun updateProduct(product: ProductEntity)
+
+    @Query("DELETE FROM products WHERE id = :id")
+    suspend fun deleteProduct(id: Long)
 }
 
 @Dao

@@ -125,8 +125,7 @@ class GymRepository(private val db: GymDatabase) {
 
     suspend fun deleteClient(id: Long): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val c = clientDao.getClientById(id) ?: return@withContext Result.failure(Exception("Клиент не найден"))
-            clientDao.updateClient(c.copy(isActive = false))
+            clientDao.deleteClient(id)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -226,10 +225,9 @@ class GymRepository(private val db: GymDatabase) {
         }
     }
     
-    suspend fun toggleMembershipTypeActive(id: Long): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun deleteMembershipType(id: Long): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val m = membershipDao.getMembershipTypeById(id) ?: return@withContext Result.failure(Exception("Тариф не найден"))
-            membershipDao.updateMembershipType(m.copy(isActive = !m.isActive))
+            membershipDao.deleteMembershipType(id)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -379,10 +377,9 @@ class GymRepository(private val db: GymDatabase) {
         }
     }
 
-    suspend fun toggleProductActive(id: Long): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun deleteProduct(id: Long): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val p = productDao.getProductById(id) ?: return@withContext Result.failure(Exception("Товар не найден"))
-            productDao.updateProduct(p.copy(isActive = !p.isActive))
+            productDao.deleteProduct(id)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

@@ -66,7 +66,8 @@ fun AppNavigation(viewModel: GymViewModel) {
             if (!isTablet) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.primary
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.navigationBarsPadding()
                 ) {
                     NavDestination.entries.forEach { dest ->
                         NavigationBarItem(
@@ -93,7 +94,7 @@ fun AppNavigation(viewModel: GymViewModel) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = innerPadding.calculateBottomPadding())
+                .padding(innerPadding)
         ) {
             // Tablet Left Navigation Rail
             if (isTablet) {

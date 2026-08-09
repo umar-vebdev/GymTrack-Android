@@ -69,8 +69,8 @@ fun TariffsScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    contentPadding = PaddingValues(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(tariffs, key = { it.id }) { tariff ->
                         TariffItemCard(
@@ -94,7 +94,7 @@ fun TariffsScreen(
                 viewModel.addMembershipType(name, durationType, durationValue, price)
                 showAddDialog = false
             },
-            onToggleActive = { }
+            onDelete = { }
         )
     }
 
@@ -106,8 +106,8 @@ fun TariffsScreen(
                 viewModel.updateMembershipType(selectedTariff!!.id, name, durationType, durationValue, price)
                 showEditDialog = false
             },
-            onToggleActive = {
-                viewModel.toggleMembershipTypeActive(selectedTariff!!.id)
+            onDelete = {
+                viewModel.deleteMembershipType(selectedTariff!!.id)
                 showEditDialog = false
             }
         )
@@ -120,54 +120,57 @@ fun TariffItemCard(
     onEditClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(
-            containerColor = if (tariff.isActive) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
-        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            modifier = Modifier.fillMaxWidth().padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (tariff.isActive) GymIndigoContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)),
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(GymIndigoContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.CardMembership,
                     contentDescription = null,
-                    tint = if (tariff.isActive) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = GymPrimaryIndigo,
+                    modifier = Modifier.size(18.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(tariff.name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
-                    if (!tariff.isActive) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Surface(color = GymRoseAlert, shape = RoundedCornerShape(6.dp)) {
-                            Text("Выкл", color = Color.White, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
+                Text(
+                    tariff.name,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Spacer(modifier = Modifier.height(2.dp))
                 val durationText = if (tariff.durationType == "days") "${tariff.durationValue} дней" else "${tariff.durationValue} визитов"
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("${tariff.price.toInt()} сомони", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = if (tariff.isActive) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(durationText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "${tariff.price.toInt()} сомони",
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                        color = GymPrimaryIndigo
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        durationText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
-            IconButton(onClick = onEditClick) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            IconButton(onClick = onEditClick, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
             }
         }
     }
@@ -178,7 +181,7 @@ fun TariffDialog(
     tariff: MembershipType?,
     onDismiss: () -> Unit,
     onSave: (name: String, durationType: String, durationValue: Int, price: Double) -> Unit,
-    onToggleActive: () -> Unit
+    onDelete: () -> Unit
 ) {
     var name by remember { mutableStateOf(tariff?.name ?: "") }
     var priceStr by remember { mutableStateOf(tariff?.price?.toString() ?: "") }
@@ -191,11 +194,11 @@ fun TariffDialog(
             onDismissRequest = { showDeleteWarning = false },
             containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("Удалить тариф?", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) },
-            text = { Text("Вы точно хотите удалить тариф «${tariff.name}» из списка?", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            text = { Text("Тариф «${tariff.name}» будет удален безвозвратно.", color = MaterialTheme.colorScheme.onSurfaceVariant) },
             confirmButton = {
                 Button(
                     onClick = {
-                        onToggleActive()
+                        onDelete()
                         showDeleteWarning = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = GymRoseAlert)
@@ -255,19 +258,13 @@ fun TariffDialog(
                     )
                     
                     if (tariff != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         OutlinedButton(
-                            onClick = {
-                                if (tariff.isActive) {
-                                    showDeleteWarning = true
-                                } else {
-                                    onToggleActive()
-                                }
-                            },
+                            onClick = { showDeleteWarning = true },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = if (tariff.isActive) GymRoseAlert else GymGreenSuccess)
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = GymRoseAlert)
                         ) {
-                            Text(if (tariff.isActive) "Удалить тариф" else "Восстановить тариф")
+                            Text("Удалить тариф")
                         }
                     }
                 }

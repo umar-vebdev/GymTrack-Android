@@ -145,8 +145,8 @@ fun JournalScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    contentPadding = PaddingValues(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(events, key = { it.id }) { event ->
                         HistoryEventCard(event)
@@ -172,11 +172,11 @@ fun HistoryEventCard(event: HistoryEvent) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            modifier = Modifier.fillMaxWidth().padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             val (icon, iconTint) = when (event) {
@@ -185,21 +185,21 @@ fun HistoryEventCard(event: HistoryEvent) {
                 is HistoryEvent.MembershipEvent -> Pair(Icons.Default.CardMembership, GymPrimaryIndigo)
             }
 
-            Icon(imageVector = icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(28.dp))
+            Icon(imageVector = icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(22.dp))
 
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(event.title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
-                Spacer(modifier = Modifier.height(2.dp))
-                Text("Клиент: ${event.clientName}", style = MaterialTheme.typography.bodySmall, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
-                Text(event.timestamp.formatAsReadableDate(), style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = GymGreenSuccess)
-                Text(event.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(event.title, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
+                Spacer(modifier = Modifier.height(1.dp))
+                Text("Клиент: ${event.clientName}", style = MaterialTheme.typography.labelSmall, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
+                Text(event.timestamp.formatAsReadableDate(), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold), color = GymGreenSuccess)
+                Text(event.description, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             if (event.amount != null) {
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("+${event.amount?.toInt()} сомони", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = GymGreenSuccess)
+                    Text("+${event.amount?.toInt()} сомони", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = GymGreenSuccess)
                     Text(if (event.paymentMethod == "cash") "Наличные" else "Карта", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }

@@ -61,8 +61,7 @@ fun ProductsScreen(
                             "all" to "Все товары",
                             "drinks" to "Напитки",
                             "supplements" to "Спортпит",
-                            "equipment" to "Экипировка",
-                            "inactive" to "Архив"
+                            "equipment" to "Экипировка"
                         ),
                         selectedKey = categoryFilter,
                         onItemSelected = { viewModel.productCategoryFilter.value = it },
@@ -77,13 +76,13 @@ fun ProductsScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Товары не найдены", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Товары не найдены", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    contentPadding = PaddingValues(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(products, key = { it.id }) { product ->
                         ProductItemCard(
@@ -142,8 +141,8 @@ fun ProductsScreen(
                     viewModel.updateProduct(selectedProductForEdit!!.id, name, cat, price, stock)
                     showEditProductDialog = false
                 },
-                onToggleActive = {
-                    viewModel.toggleProductActive(selectedProductForEdit!!.id)
+                onDelete = {
+                    viewModel.deleteProduct(selectedProductForEdit!!.id)
                     showEditProductDialog = false
                 }
             )
@@ -217,20 +216,20 @@ fun ProductItemCard(
     onEditClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)),
-        colors = CardDefaults.cardColors(containerColor = if (product.isActive) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            modifier = Modifier.fillMaxWidth().padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (product.isActive) GymIndigoContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)),
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(GymIndigoContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -241,42 +240,49 @@ fun ProductItemCard(
                         else -> Icons.Default.ShoppingBag
                     },
                     contentDescription = null,
-                    tint = if (product.isActive) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = GymPrimaryIndigo,
+                    modifier = Modifier.size(18.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(product.name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
-                    if (!product.isActive) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Surface(color = GymRoseAlert, shape = RoundedCornerShape(6.dp)) {
-                            Text("Выкл", color = Color.White, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
+                Text(
+                    product.name,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("${product.price.toInt()} сомони", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = if (product.isActive) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text("Склад: ${product.stockQuantity} шт.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "${product.price.toInt()} сомони",
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                        color = GymPrimaryIndigo
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Склад: ${product.stockQuantity} шт.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
-            IconButton(onClick = onEditClick) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            IconButton(onClick = onEditClick, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
             }
+
+            Spacer(modifier = Modifier.width(4.dp))
 
             Button(
                 onClick = onSellClick,
-                enabled = product.isActive && product.stockQuantity > 0,
+                enabled = product.stockQuantity > 0,
                 colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo),
                 shape = RoundedCornerShape(10.dp),
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
             ) {
-                Text("Продать", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("Продать", color = Color.White, style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
             }
         }
     }
@@ -358,7 +364,7 @@ fun EditProductDialog(
     product: Product,
     onDismiss: () -> Unit,
     onSave: (name: String, category: String, price: Double, stock: Int) -> Unit,
-    onToggleActive: () -> Unit
+    onDelete: () -> Unit
 ) {
     var name by remember { mutableStateOf(product.name) }
     var priceStr by remember { mutableStateOf(product.price.toString()) }
@@ -371,11 +377,11 @@ fun EditProductDialog(
             onDismissRequest = { showDeleteWarning = false },
             containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("Удалить товар?", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) },
-            text = { Text("Вы точно хотите удалить товар «${product.name}» из каталога?", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            text = { Text("Товар «${product.name}» будет удален безвозвратно.", color = MaterialTheme.colorScheme.onSurfaceVariant) },
             confirmButton = {
                 Button(
                     onClick = {
-                        onToggleActive()
+                        onDelete()
                         showDeleteWarning = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = GymRoseAlert)
@@ -429,19 +435,13 @@ fun EditProductDialog(
                         modifier = Modifier.fillMaxWidth().height(48.dp)
                     )
                     
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     OutlinedButton(
-                        onClick = {
-                            if (product.isActive) {
-                                showDeleteWarning = true
-                            } else {
-                                onToggleActive()
-                            }
-                        },
+                        onClick = { showDeleteWarning = true },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = if (product.isActive) GymRoseAlert else GymGreenSuccess)
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = GymRoseAlert)
                     ) {
-                        Text(if (product.isActive) "Удалить товар" else "Восстановить товар")
+                        Text("Удалить товар")
                     }
                 }
             },

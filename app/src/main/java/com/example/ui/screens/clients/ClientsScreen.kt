@@ -228,8 +228,8 @@ fun LazyLazyClientsList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        contentPadding = PaddingValues(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(clients, key = { it.id }) { client ->
             ClientCardItem(
@@ -256,17 +256,17 @@ fun ClientCardItem(
             .fillMaxWidth()
             .clickable { onClick() }
             .then(
-                if (isSelected) Modifier.border(2.dp, GymPrimaryIndigo, RoundedCornerShape(16.dp))
+                if (isSelected) Modifier.border(2.dp, GymPrimaryIndigo, RoundedCornerShape(12.dp))
                 else Modifier
             ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Client Avatar Initials
@@ -278,30 +278,30 @@ fun ClientCardItem(
 
             Box(
                 modifier = Modifier
-                    .size(46.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
                     .background(GymIndigoContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = initials.ifEmpty { "GT" },
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                     color = GymPrimaryIndigo
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             // Client Info
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = client.fullName,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f, fill = false)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Surface(
                         color = GymIndigoContainer,
                         shape = RoundedCornerShape(6.dp)
@@ -310,20 +310,20 @@ fun ClientCardItem(
                             text = client.clientCode,
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             color = GymIndigoOnContainer,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(1.dp))
 
                 Text(
                     text = client.phone,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
 
                 // Tariff Status Badge
                 if (active != null) {
@@ -337,11 +337,11 @@ fun ClientCardItem(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(6.dp)
+                                .size(5.dp)
                                 .clip(CircleShape)
                                 .background(statusColor)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = text,
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
@@ -357,32 +357,32 @@ fun ClientCardItem(
                 }
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(6.dp))
 
             // Quick Check-in Button
             if (active != null) {
                 Button(
                     onClick = onDeductVisit,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = "−1",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.ExtraBold),
                         color = Color.White
                     )
                 }
             } else {
                 Button(
                     onClick = onClick,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = "Оформить",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = Color.White
                     )
                 }

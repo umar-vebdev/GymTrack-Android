@@ -209,9 +209,10 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    fun toggleMembershipTypeActive(id: Long) {
+    fun deleteMembershipType(id: Long) {
         viewModelScope.launch {
-            val result = gymRepository.toggleMembershipTypeActive(id)
+            val result = gymRepository.deleteMembershipType(id)
+            result.onSuccess { _uiMessage.emit("Тариф удален") }
             result.onFailure { _uiMessage.emit(it.message ?: "Ошибка") }
         }
     }
@@ -268,9 +269,10 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun toggleProductActive(id: Long) {
+    fun deleteProduct(id: Long) {
         viewModelScope.launch {
-            val result = gymRepository.toggleProductActive(id)
+            val result = gymRepository.deleteProduct(id)
+            result.onSuccess { _uiMessage.emit("Товар удален") }
             result.onFailure { _uiMessage.emit(it.message ?: "Ошибка") }
         }
     }
