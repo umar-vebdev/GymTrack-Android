@@ -138,7 +138,7 @@ class GymRepository(private val db: GymDatabase) {
             clientDao.getClientById(clientId) ?: return@withContext Result.failure(Exception("Клиент не найден"))
             val purchases = membershipDao.getPurchasesForClientSync(clientId)
             if (purchases.isEmpty()) {
-                return@withContext Result.failure(Exception("CHECK_IN_FAILED: У клиента нет купленных абонементов!"))
+                return@withContext Result.failure(Exception("У клиента нет купленных абонементов!"))
             }
 
             // Find valid active purchase
@@ -146,7 +146,7 @@ class GymRepository(private val db: GymDatabase) {
                 val notExpiredDate = p.expiresAt?.let { !isDateBeforeToday(it) } ?: true
                 val hasVisits = p.visitsLeft == null || p.visitsLeft > 0
                 notExpiredDate && hasVisits
-            } ?: return@withContext Result.failure(Exception("CHECK_IN_FAILED: Активный абонемент истек или закончились визиты!"))
+            } ?: return@withContext Result.failure(Exception("Активный абонемент истек или закончились визиты!"))
 
             val nowStr = dateFormat.format(Date())
 
@@ -489,7 +489,9 @@ class GymRepository(private val db: GymDatabase) {
                             id = "visit_${v.id}",
                             title = "Посещение зала",
                             description = "Очно в зале",
+                            clientId = c?.id ?: v.clientId,
                             clientName = c?.fullName ?: "Клиент #${v.clientId}",
+                            clientCode = c?.clientCode ?: "",
                             timestamp = v.visitedAt
                         )
                     )
@@ -505,7 +507,9 @@ class GymRepository(private val db: GymDatabase) {
                             id = "sale_${s.id}",
                             title = " Продажа товара: ${p?.name ?: "Товар"}",
                             description = "Количество: ${s.quantity} шт. | Способ: ${if (s.paymentMethod == "cash") "Наличные" else "Карта"}",
+                            clientId = c?.id ?: s.clientId,
                             clientName = c?.fullName ?: "Клиент #${s.clientId}",
+                            clientCode = c?.clientCode ?: "",
                             timestamp = s.createdAt,
                             amount = s.totalPrice,
                             paymentMethod = s.paymentMethod
@@ -523,7 +527,9 @@ class GymRepository(private val db: GymDatabase) {
                             id = "purchase_${mp.id}",
                             title = " Продажа абонемента: ${t?.name ?: "Абонемент"}",
                             description = "Действует с ${mp.startsAt} | Способ: ${if (mp.paymentMethod == "cash") "Наличные" else "Карта"}",
+                            clientId = c?.id ?: mp.clientId,
                             clientName = c?.fullName ?: "Клиент #${mp.clientId}",
+                            clientCode = c?.clientCode ?: "",
                             timestamp = mp.createdAt,
                             amount = mp.amountPaid,
                             paymentMethod = mp.paymentMethod

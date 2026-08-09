@@ -19,11 +19,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.GymViewModel
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import com.example.R
 
 @Composable
 fun LoginScreen(viewModel: GymViewModel) {
-    var email by remember { mutableStateOf("staff@gymtrack.com") }
-    var password by remember { mutableStateOf("123456") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -46,19 +50,22 @@ fun LoginScreen(viewModel: GymViewModel) {
                     .padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header Logo Icon
+                // Header Typographic Logo
                 Box(
                     modifier = Modifier
-                        .size(72.dp)
-                        .clip(RoundedCornerShape(20.dp))
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(24.dp))
                         .background(GymPrimaryIndigo),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.FitnessCenter,
-                        contentDescription = "GymTrack Logo",
-                        tint = Color.White,
-                        modifier = Modifier.size(42.dp)
+                    Text(
+                        text = "GT",
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-1).sp
+                        ),
+                        color = Color.White,
+                        modifier = Modifier.padding(bottom = 2.dp)
                     )
                 }
 
@@ -73,11 +80,7 @@ fun LoginScreen(viewModel: GymViewModel) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Text(
-                    text = "Caspian Fitness Club • Таджикистан",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+
 
                 Spacer(modifier = Modifier.height(28.dp))
 

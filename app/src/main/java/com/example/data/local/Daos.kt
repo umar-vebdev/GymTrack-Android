@@ -36,6 +36,12 @@ interface ClientDao {
 
     @Query("DELETE FROM clients")
     suspend fun deleteAll()
+
+    @Query("SELECT * FROM clients ORDER BY fullName ASC")
+    suspend fun getAllClientsSync(): List<ClientEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertClientWithId(client: ClientEntity)
 }
 
 @Dao
@@ -81,6 +87,18 @@ interface MembershipDao {
 
     @Query("DELETE FROM membership_purchases")
     suspend fun deleteAllPurchases()
+
+    @Query("SELECT * FROM membership_types ORDER BY name ASC")
+    suspend fun getAllMembershipTypesSync(): List<MembershipTypeEntity>
+
+    @Query("SELECT * FROM membership_purchases ORDER BY createdAt DESC")
+    suspend fun getAllPurchasesSync(): List<MembershipPurchaseEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMembershipTypeWithId(type: MembershipTypeEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPurchaseWithId(purchase: MembershipPurchaseEntity)
 }
 
 @Dao
@@ -117,6 +135,12 @@ interface ProductDao {
 
     @Query("DELETE FROM products WHERE id = :id")
     suspend fun deleteProduct(id: Long)
+
+    @Query("SELECT * FROM products ORDER BY name ASC")
+    suspend fun getAllProductsSync(): List<ProductEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertProductWithId(product: ProductEntity)
 }
 
 @Dao
@@ -132,6 +156,12 @@ interface SaleDao {
 
     @Query("DELETE FROM product_sales")
     suspend fun deleteAll()
+
+    @Query("SELECT * FROM product_sales ORDER BY createdAt DESC")
+    suspend fun getAllSalesSync(): List<ProductSaleEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSaleWithId(sale: ProductSaleEntity)
 }
 
 @Dao
@@ -156,6 +186,12 @@ interface VisitDao {
 
     @Query("DELETE FROM visits")
     suspend fun deleteAll()
+
+    @Query("SELECT * FROM visits ORDER BY visitedAt DESC")
+    suspend fun getAllVisitsSync(): List<VisitEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertVisitWithId(visit: VisitEntity)
 }
 
 @Dao
@@ -177,4 +213,10 @@ interface CurrencyDao {
 
     @Delete
     suspend fun deleteCurrency(currency: CurrencyEntity)
+
+    @Query("SELECT * FROM currencies ORDER BY name ASC")
+    suspend fun getAllCurrenciesSync(): List<CurrencyEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCurrencyWithId(currency: CurrencyEntity)
 }

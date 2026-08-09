@@ -75,7 +75,7 @@ fun ClientsScreen(
                         CompactClientSearchField(
                             value = searchQuery,
                             onValueChange = { viewModel.searchQuery.value = it },
-                            placeholderText = "Поиск по имени, коду GT или телефону (+992)..."
+                            placeholderText = "Поиск клиента по ФИО, коду или телефону..."
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -336,13 +336,13 @@ fun ClientCardItem(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Surface(
-                        color = GymIndigoContainer,
+                        color = MaterialTheme.colorScheme.primaryContainer,
                         shape = RoundedCornerShape(6.dp)
                     ) {
                         Text(
                             text = client.clientCode,
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                            color = GymIndigoOnContainer,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                         )
                     }

@@ -75,10 +75,12 @@ data class Visit(
 
 sealed class HistoryEvent(
     open val id: String,
-    open val type: String, // "visit", "product_sale", "membership_purchase"
+    open val type: String,
     open val title: String,
     open val description: String,
+    open val clientId: Long,
     open val clientName: String,
+    open val clientCode: String,
     open val timestamp: String,
     open val amount: Double? = null,
     open val paymentMethod: String? = null
@@ -87,29 +89,35 @@ sealed class HistoryEvent(
         override val id: String,
         override val title: String,
         override val description: String,
+        override val clientId: Long,
         override val clientName: String,
+        override val clientCode: String,
         override val timestamp: String
-    ) : HistoryEvent(id, "visit", title, description, clientName, timestamp)
+    ) : HistoryEvent(id, "visit", title, description, clientId, clientName, clientCode, timestamp)
 
     data class SaleEvent(
         override val id: String,
         override val title: String,
         override val description: String,
+        override val clientId: Long,
         override val clientName: String,
+        override val clientCode: String,
         override val timestamp: String,
         override val amount: Double,
         override val paymentMethod: String
-    ) : HistoryEvent(id, "product_sale", title, description, clientName, timestamp, amount, paymentMethod)
+    ) : HistoryEvent(id, "product_sale", title, description, clientId, clientName, clientCode, timestamp, amount, paymentMethod)
 
     data class MembershipEvent(
         override val id: String,
         override val title: String,
         override val description: String,
+        override val clientId: Long,
         override val clientName: String,
+        override val clientCode: String,
         override val timestamp: String,
         override val amount: Double,
         override val paymentMethod: String
-    ) : HistoryEvent(id, "membership_purchase", title, description, clientName, timestamp, amount, paymentMethod)
+    ) : HistoryEvent(id, "membership_purchase", title, description, clientId, clientName, clientCode, timestamp, amount, paymentMethod)
 }
 
 data class DashboardStats(

@@ -1,8 +1,10 @@
 package com.example.ui.viewmodel
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.data.backup.BackupManager
 import com.example.data.local.GymDatabase
 import com.example.data.repository.AuthRepository
 import com.example.data.repository.GymRepository
@@ -15,6 +17,7 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
     private val db = GymDatabase.getInstance(application)
     val gymRepository = GymRepository(db)
     val authRepository = AuthRepository(application)
+    private val backupManager = BackupManager(application, db)
 
     // Auth State
     val isLoggedIn: StateFlow<Boolean> = authRepository.token.map { it != null }
@@ -224,6 +227,7 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
     fun updateMembershipType(id: Long, name: String, durationType: String, durationValue: Int, price: Double) {
         viewModelScope.launch {
             val result = gymRepository.updateMembershipType(id, name, durationType, durationValue, price)
+            result.onSuccess { _uiMessage.emit("Тариф успешно обновлен") }
             result.onFailure { _uiMessage.emit(it.message ?: "Ошибка") }
         }
     }
@@ -269,6 +273,7 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
                 return@launch
             }
             val result = gymRepository.updateProduct(id, name, category, price, stock)
+            result.onSuccess { _uiMessage.emit("Товар успешно обновлен") }
             result.onFailure { _uiMessage.emit(it.message ?: "Ошибка") }
         }
     }
@@ -316,6 +321,49 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
             db.membershipDao().deleteAllPurchases()
             db.saleDao().deleteAll()
             _selectedClientId.value = null
+            _uiMessage.emit("Данные успешно удалены!")
         }
+    }
+
+    // Backup & Restore
+    val backupStatus = MutableStateFlow<String?>(null)
+
+    fun exportBackup() {
+        viewModelScope.launch {
+            backupStatus.value = "Экспорт..."
+            val result = backupManager.exportBackup()
+            backupStatus.value = result.fold(
+                onSuccess = { fileName -> 
+                    launch { _uiMessage.emit("Резервная копия успешно сохранена: $fileName") }
+                    "✓ Сохранено: $fileName" 
+                },
+                onFailure = { 
+                    launch { _uiMessage.emit("Ошибка экспорта: ${it.message}") }
+                    "Ошибка: ${it.message}" 
+                }
+            )
+        }
+    }
+
+    fun importBackup(uri: Uri) {
+        viewModelScope.launch {
+            backupStatus.value = "Импорт..."
+            val result = backupManager.importBackup(uri)
+            _selectedClientId.value = null
+            backupStatus.value = result.fold(
+                onSuccess = { msg -> 
+                    launch { _uiMessage.emit("Данные успешно импортированы!") }
+                    "✓ $msg" 
+                },
+                onFailure = { 
+                    launch { _uiMessage.emit("Ошибка импорта: ${it.message}") }
+                    "Ошибка: ${it.message}" 
+                }
+            )
+        }
+    }
+
+    fun clearBackupStatus() {
+        backupStatus.value = null
     }
 }

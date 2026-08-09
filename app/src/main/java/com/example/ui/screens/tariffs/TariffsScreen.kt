@@ -43,11 +43,6 @@ fun TariffsScreen(
             Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
                 CenterAlignedTopAppBar(
                     title = { Text("Управление тарифами", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
-                        }
-                    },
                     actions = {
                         GlobalSettingsButton(viewModel = viewModel)
                     },
