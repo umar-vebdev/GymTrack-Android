@@ -3,11 +3,12 @@ package com.example.ui.screens.clients
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -21,11 +22,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.domain.model.Client
-import com.example.ui.components.CustomDropdownFilter
+import com.example.ui.components.FilterChip
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.GymViewModel
+
+import com.example.ui.components.GlobalSettingsButton
 
 @Composable
 fun ClientsScreen(
@@ -35,7 +37,7 @@ fun ClientsScreen(
 ) {
     val clients by viewModel.clients.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
-    val selectedFilterCategory by viewModel.selectedFilterCategory.collectAsState()
+    val selectedFilterCategories by viewModel.selectedFilterCategories.collectAsState()
     val selectedClientId by viewModel.selectedClientId.collectAsState()
 
     var showAddClientDialog by remember { mutableStateOf(false) }
@@ -49,58 +51,70 @@ fun ClientsScreen(
                 color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 1.dp
             ) {
-                Column(modifier = Modifier.statusBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp)) {
-                    // Sleek Compact Search Field
-                    CompactClientSearchField(
-                        value = searchQuery,
-                        onValueChange = { viewModel.searchQuery.value = it },
-                        placeholderText = "Поиск по имени, коду GT или телефону (+992)..."
+                Column {
+                    @OptIn(ExperimentalMaterial3Api::class)
+                    CenterAlignedTopAppBar(
+                        title = { Text("Клиенты", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) },
+                        actions = {
+                            GlobalSettingsButton(viewModel = viewModel)
+                        },
+                        windowInsets = WindowInsets(0.dp),
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = MaterialTheme.colorScheme.onSurface
+                        )
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                        // Sleek Compact Search Field
+                        CompactClientSearchField(
+                            value = searchQuery,
+                            onValueChange = { viewModel.searchQuery.value = it },
+                            placeholderText = "Поиск по имени, коду GT или телефону (+992)..."
+                        )
 
-                    // Custom Dropdown & Theme Toggle
+                        Spacer(modifier = Modifier.height(12.dp))
+
                     Row(
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        CustomDropdownFilter(
-                            options = mapOf(
-                                "all" to "Все клиенты (${clients.size})",
-                                "visits" to "По визитам",
-                                "days" to "По дням",
-                                "expiring" to "Истекают / Мало визитов"
-                            ),
-                            selectedKey = selectedFilterCategory,
-                            onItemSelected = { viewModel.selectedFilterCategory.value = it },
-                            modifier = Modifier.weight(1f).fillMaxHeight()
+                        val clientFilterOptions = mapOf(
+                            "all" to "Все клиенты",
+                            "visits" to "По визитам",
+                            "days" to "По дням",
+                            "expiring" to "Истекают"
                         )
-                        
-                        Spacer(modifier = Modifier.width(12.dp))
-                        
-                        val isSystemDark = isSystemInDarkTheme()
-                        val currentIsDark = viewModel.isDarkMode.collectAsState().value ?: isSystemDark
 
-                        IconButton(
-                            onClick = { viewModel.toggleTheme(isSystemDark) },
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        Row(
+                            modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(
-                                imageVector = if (currentIsDark) Icons.Default.Brightness7 else Icons.Default.Brightness4,
-                                contentDescription = "Toggle Theme",
-                                tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(24.dp)
-                            )
+                            clientFilterOptions.forEach { (key, label) ->
+                                val isSelected = selectedFilterCategories.contains(key)
+                                FilterChip(
+                                    label = label,
+                                    isSelected = isSelected,
+                                    onClick = {
+                                        val newSet = if (key == "all") {
+                                            setOf("all")
+                                        } else {
+                                            val mutable = selectedFilterCategories.toMutableSet()
+                                            mutable.remove("all")
+                                            if (mutable.contains(key)) mutable.remove(key) else mutable.add(key)
+                                            if (mutable.isEmpty()) setOf("all") else mutable
+                                        }
+                                        viewModel.selectedFilterCategories.value = newSet
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
+        }
 
-            // Clients List
+        // Clients List
             if (clients.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -164,12 +178,11 @@ fun ClientsScreen(
 fun CompactClientSearchField(
     value: String,
     onValueChange: (String) -> Unit,
-    placeholderText: String
+    placeholderText: String,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(44.dp),
+        modifier = modifier.height(44.dp),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
     ) {
@@ -257,16 +270,15 @@ fun ClientCardItem(
             .clickable { onClick() }
             .then(
                 if (isSelected) Modifier.border(2.dp, GymPrimaryIndigo, RoundedCornerShape(12.dp))
-                else Modifier
+                else Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
             ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Client Avatar Initials
@@ -279,14 +291,14 @@ fun ClientCardItem(
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .clip(CircleShape)
-                    .background(GymIndigoContainer),
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = initials.ifEmpty { "GT" },
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                    color = GymPrimaryIndigo
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -471,3 +483,4 @@ fun AddClientDialog(
         }
     )
 }
+

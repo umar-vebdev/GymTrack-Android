@@ -71,7 +71,7 @@ fun ClientDetailScreen(
             if (onBackClick != null) {
                 Surface(color = MaterialTheme.colorScheme.surface) {
                     Row(
-                        modifier = Modifier.statusBarsPadding().fillMaxWidth().padding(12.dp),
+                        modifier = Modifier.fillMaxWidth().padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onBackClick) {
@@ -107,7 +107,7 @@ fun ClientDetailScreen(
             }
 
             LazyColumn(
-                modifier = Modifier.fillMaxSize().then(if (onBackClick == null) Modifier.statusBarsPadding() else Modifier),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -237,7 +237,7 @@ fun ClientHeaderCard(client: Client, onDeleteClick: () -> Unit) {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(GymIndigoContainer),
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -438,10 +438,18 @@ fun VisitHistoryItem(visit: Visit, onCancel: () -> Unit) {
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.CheckCircleOutline, contentDescription = null, tint = GymGreenSuccess, modifier = Modifier.size(20.dp))
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(GymGreenSuccess.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.CheckCircleOutline, contentDescription = null, tint = GymGreenSuccess, modifier = Modifier.size(18.dp))
+            }
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text("Посещение зала", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
@@ -483,21 +491,29 @@ fun PurchaseHistoryItem(purchase: MembershipPurchase, client: Client) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = if (isActive) GymIndigoContainer else MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isActive) 2.dp else 1.dp)
+        colors = CardDefaults.cardColors(containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.CardMembership, contentDescription = null, tint = if (isActive) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+            val iconTint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(iconTint.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.CardMembership, contentDescription = null, tint = iconTint, modifier = Modifier.size(18.dp))
+            }
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = purchase.membershipTypeName, 
                     style = MaterialTheme.typography.bodyMedium, 
-                    color = if (isActive) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurface,
+                    color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                     fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
                 )
                 Text("Сумма: ${purchase.amountPaid.toInt()} сомони (${if (purchase.paymentMethod == "cash") "Наличные" else "Карта"})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -505,7 +521,7 @@ fun PurchaseHistoryItem(purchase: MembershipPurchase, client: Client) {
             }
             if (isActive) {
                 Surface(
-                    color = GymPrimaryIndigo,
+                    color = MaterialTheme.colorScheme.primary,
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
@@ -528,10 +544,18 @@ fun ProductSaleHistoryItem(sale: ProductSale) {
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.ShoppingBag, contentDescription = null, tint = GymAmberAlert, modifier = Modifier.size(20.dp))
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(GymAmberAlert.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.ShoppingBag, contentDescription = null, tint = GymAmberAlert, modifier = Modifier.size(18.dp))
+            }
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text("${sale.productName} (x${sale.quantity})", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
@@ -580,7 +604,7 @@ fun PurchaseTariffModal(
         ) {
             Text(
                 "Оформление абонемента", 
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
 
@@ -596,9 +620,9 @@ fun PurchaseTariffModal(
                     val isSelected = selectedTypeId == type.id
                     Card(
                         onClick = { selectedTypeId = type.id },
-                        colors = CardDefaults.cardColors(containerColor = if (isSelected) GymIndigoContainer else MaterialTheme.colorScheme.surfaceVariant),
+                        colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant),
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().then(if (isSelected) Modifier.border(2.dp, GymPrimaryIndigo, RoundedCornerShape(12.dp)) else Modifier)
+                        modifier = Modifier.fillMaxWidth().then(if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp)) else Modifier)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -681,7 +705,7 @@ fun SellProductModal(
                 .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Продажа товара", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
+            Text("Продажа товара", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
             Text("Клиент: ${client.fullName}", style = MaterialTheme.typography.titleMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.SemiBold)
 
             Text("Выберите товар:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -694,17 +718,17 @@ fun SellProductModal(
                     val isSelected = selectedProductId == prod.id
                     Card(
                         onClick = { selectedProductId = prod.id },
-                        colors = CardDefaults.cardColors(containerColor = if (isSelected) GymIndigoContainer else MaterialTheme.colorScheme.surfaceVariant),
+                        colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant),
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().then(if (isSelected) Modifier.border(2.dp, GymPrimaryIndigo, RoundedCornerShape(12.dp)) else Modifier)
+                        modifier = Modifier.fillMaxWidth().then(if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp)) else Modifier)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(prod.name, style = MaterialTheme.typography.bodyMedium, color = GymTextPrimary, fontWeight = FontWeight.Bold)
-                            Text("${prod.price.toInt()} сомони", style = MaterialTheme.typography.bodyMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
+                            Text(prod.name, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                            Text("${prod.price.toInt()} сомони", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

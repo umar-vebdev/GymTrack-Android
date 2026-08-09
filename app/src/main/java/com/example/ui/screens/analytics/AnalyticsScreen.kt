@@ -3,10 +3,11 @@ package com.example.ui.screens.analytics
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -22,7 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.model.DashboardStats
 import com.example.domain.model.ExpiringMembershipInfo
-import com.example.ui.components.CustomDropdownFilter
+import com.example.ui.components.FilterDropdownChip
+import com.example.ui.components.GlobalSettingsButton
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.GymViewModel
 import java.text.SimpleDateFormat
@@ -42,84 +44,100 @@ fun AnalyticsScreen(
     var showDatePicker by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().statusBarsPadding(),
-            contentPadding = PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            // Screen Header & Date Range Selector
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text = "Аналитика и финансовый отчет",
-                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onBackground
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Top Header & Filters
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
+                Column {
+                    @OptIn(ExperimentalMaterial3Api::class)
+                    CenterAlignedTopAppBar(
+                        title = { Text("Аналитика", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) },
+                        actions = {
+                            GlobalSettingsButton(viewModel = viewModel)
+                        },
+                        windowInsets = WindowInsets(0.dp),
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = MaterialTheme.colorScheme.onSurface
+                        )
                     )
 
                     // Date Range Filter Dropdown
-                    CustomDropdownFilter(
-                        options = mapOf(
-                            "today" to "Сегодня",
-                            "yesterday" to "Вчера",
-                            "week" to "7 дней",
-                            "month" to "30 дней",
-                            "all" to "Всё время",
-                            "custom_trigger" to "Свой период..."
-                        ),
-                        selectedKey = if (dateFilter.startsWith("custom|")) "custom_trigger" else dateFilter,
-                        customSelectedLabel = if (dateFilter.startsWith("custom|")) "Свой период" else null,
-                        onItemSelected = { key ->
-                            if (key == "custom_trigger") {
-                                showDatePicker = true
-                            } else {
-                                viewModel.analyticsDateFilter.value = key
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    val dateOptions = mutableMapOf(
+                        "today" to "Сегодня",
+                        "yesterday" to "Вчера",
+                        "week" to "7 дней",
+                        "month" to "30 дней",
+                        "all" to "Всё время"
                     )
+                    dateOptions["custom_trigger"] = "Свой период..."
+                    
+                    val currentLabel = if (dateFilter.startsWith("custom|")) "Свой период" else dateOptions[dateFilter] ?: "Период"
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        FilterDropdownChip(
+                            label = currentLabel,
+                            options = dateOptions,
+                            onItemSelected = { key ->
+                                if (key == "custom_trigger") {
+                                    showDatePicker = true
+                                } else {
+                                    viewModel.analyticsDateFilter.value = key
+                                }
+                            },
+                            modifier = Modifier.width(200.dp)
+                        )
+                    }
                 }
             }
 
-            // 1. Compact Dashboard Stat Grid
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // 1. Compact Dashboard Stat Grid
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         StatCard(
                             title = "Выручка",
                             value = "${stats.todayRevenue.toInt()} сомони",
                             icon = Icons.Default.Payments,
-                            accentColor = GymPrimaryIndigo,
-                            modifier = Modifier.weight(1f)
+                            accentColor = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.weight(1f).fillMaxHeight()
                         )
                         StatCard(
                             title = "Визиты",
                             value = "${stats.todayVisits} чел.",
                             icon = Icons.Default.CheckCircle,
-                            accentColor = GymGreenSuccess,
-                            modifier = Modifier.weight(1f)
+                            accentColor = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.weight(1f).fillMaxHeight()
                         )
                     }
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         StatCard(
                             title = "Продажи товаров",
                             value = "${stats.todaySalesCount} шт.",
                             icon = Icons.Default.ShoppingBag,
-                            accentColor = GymAmberAlert,
-                            modifier = Modifier.weight(1f)
+                            accentColor = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.weight(1f).fillMaxHeight()
                         )
                         StatCard(
                             title = "Активные тарифы",
                             value = "${stats.activeMemberships}",
                             icon = Icons.Default.CardMembership,
-                            accentColor = GymPrimaryIndigo,
-                            modifier = Modifier.weight(1f)
+                            accentColor = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.weight(1f).fillMaxHeight()
                         )
                     }
                 }
@@ -131,7 +149,8 @@ fun AnalyticsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text(
@@ -257,8 +276,9 @@ fun AnalyticsScreen(
                 }
             }
         }
+    }
         
-        if (showDatePicker) {
+    if (showDatePicker) {
             CustomDateRangePickerModal(
                 onDismiss = { showDatePicker = false },
                 onDateRangeSelected = { start, end ->
@@ -324,7 +344,8 @@ fun StatCard(
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Row(
             modifier = Modifier.padding(10.dp),
@@ -360,10 +381,10 @@ fun ExpiringClientCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -394,9 +415,9 @@ fun ExpiringClientCard(
                 onClick = onCallClick,
                 modifier = Modifier
                     .clip(RoundedCornerShape(10.dp))
-                    .background(GymIndigoContainer)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
             ) {
-                Icon(Icons.Default.Call, contentDescription = "Call", tint = GymPrimaryIndigo, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Call, contentDescription = "Call", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
             }
         }
     }

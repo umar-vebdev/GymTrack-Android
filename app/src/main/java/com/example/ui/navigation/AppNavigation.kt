@@ -23,6 +23,8 @@ import com.example.ui.screens.clients.ClientsScreen
 import com.example.ui.screens.journal.JournalScreen
 import com.example.ui.screens.products.ProductsScreen
 import com.example.ui.screens.tariffs.TariffsScreen
+import com.example.ui.screens.settings.SettingsScreen
+import com.example.ui.components.LocalSettingsAction
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.GymViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -57,11 +59,21 @@ fun AppNavigation(viewModel: GymViewModel) {
 
     var currentDestination by remember { mutableStateOf(NavDestination.CLIENTS) }
     var phoneShowDetailScreen by remember { mutableStateOf(false) }
+    var showSettingsScreen by remember { mutableStateOf(false) }
 
     val selectedClient by viewModel.selectedClient.collectAsState()
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+    if (showSettingsScreen) {
+        SettingsScreen(
+            viewModel = viewModel,
+            onBackClick = { showSettingsScreen = false }
+        )
+        return
+    }
+
+    CompositionLocalProvider(LocalSettingsAction provides { showSettingsScreen = true }) {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (!isTablet) {
                 NavigationBar(
@@ -77,7 +89,15 @@ fun AppNavigation(viewModel: GymViewModel) {
                                 phoneShowDetailScreen = false
                             },
                             icon = { Icon(dest.icon, contentDescription = dest.label) },
-                            label = { Text(dest.label) },
+                            label = { 
+                                Text(
+                                    text = dest.label,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Visible,
+                                    style = MaterialTheme.typography.labelSmall
+                                ) 
+                            },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = GymPrimaryIndigo,
                                 selectedTextColor = GymPrimaryIndigo,
@@ -193,3 +213,6 @@ fun AppNavigation(viewModel: GymViewModel) {
         }
     }
 }
+}
+
+

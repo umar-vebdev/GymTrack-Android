@@ -14,11 +14,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.domain.model.HistoryEvent
 import com.example.ui.theme.*
+import com.example.ui.components.FilterChip
+import com.example.ui.components.FilterDropdownChip
+import com.example.ui.components.GlobalSettingsButton
 import com.example.ui.viewmodel.GymViewModel
 import com.example.util.formatAsReadableDate
 
@@ -28,12 +33,10 @@ fun JournalScreen(
     modifier: Modifier = Modifier
 ) {
     val events by viewModel.historyEvents.collectAsState()
-    val currentFilter by viewModel.historyTypeFilter.collectAsState()
+    val currentFilters by viewModel.historyTypeFilters.collectAsState()
     val dateFilter by viewModel.historyDateFilter.collectAsState()
 
     var showDatePicker by remember { mutableStateOf(false) }
-    var expandedTypeDropdown by remember { mutableStateOf(false) }
-    var expandedDateDropdown by remember { mutableStateOf(false) }
 
     val filterLabels = mapOf(
         "all" to "Все события",
@@ -55,84 +58,61 @@ fun JournalScreen(
 
             // Top Header & Filters
             Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
-                Column(modifier = Modifier.statusBarsPadding().padding(16.dp)) {
-                    Text(
-                        text = "Единый журнал событий",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface
+                Column {
+                    @OptIn(ExperimentalMaterial3Api::class)
+                    CenterAlignedTopAppBar(
+                        title = { Text("Единый журнал событий", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) },
+                        actions = {
+                            GlobalSettingsButton(viewModel = viewModel)
+                        },
+                        windowInsets = WindowInsets(0.dp),
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = MaterialTheme.colorScheme.onSurface
+                        )
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
                     Row(
-                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Date Filter Dropdown/Button
-                        Box {
-                            OutlinedButton(
-                                onClick = { expandedDateDropdown = true },
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Icon(Icons.Default.DateRange, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (dateFilter.startsWith("custom|")) "Свой период" else (dateLabels[dateFilter] ?: "Период"),
-                                    maxLines = 1
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
-                            }
-                            
-                            DropdownMenu(
-                                expanded = expandedDateDropdown,
-                                onDismissRequest = { expandedDateDropdown = false }
-                            ) {
-                                dateLabels.forEach { (key, label) ->
-                                    DropdownMenuItem(
-                                        text = { Text(label) },
-                                        onClick = { 
-                                            viewModel.historyDateFilter.value = key
-                                            expandedDateDropdown = false
-                                        }
-                                    )
-                                }
-                                DropdownMenuItem(
-                                    text = { Text("Свой период...") },
-                                    onClick = {
-                                        expandedDateDropdown = false
-                                        showDatePicker = true
+                        // Type Filters as separate chips
+                        filterLabels.forEach { (key, label) ->
+                            val isSelected = currentFilters.contains(key)
+                            FilterChip(
+                                label = label,
+                                isSelected = isSelected,
+                                onClick = {
+                                    val newSet = if (key == "all") {
+                                        setOf("all")
+                                    } else {
+                                        val mutable = currentFilters.toMutableSet()
+                                        mutable.remove("all")
+                                        if (mutable.contains(key)) mutable.remove(key) else mutable.add(key)
+                                        if (mutable.isEmpty()) setOf("all") else mutable
                                     }
-                                )
-                            }
+                                    viewModel.historyTypeFilters.value = newSet
+                                }
+                            )
                         }
-
-                        // Type Filter Dropdown/Button
-                        Box {
-                            OutlinedButton(
-                                onClick = { expandedTypeDropdown = true },
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text(filterLabels[currentFilter] ?: "Все события", maxLines = 1)
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
-                            }
-                            
-                            DropdownMenu(
-                                expanded = expandedTypeDropdown,
-                                onDismissRequest = { expandedTypeDropdown = false }
-                            ) {
-                                filterLabels.forEach { (key, label) ->
-                                    DropdownMenuItem(
-                                        text = { Text(label) },
-                                        onClick = { 
-                                            viewModel.historyTypeFilter.value = key
-                                            expandedTypeDropdown = false
-                                        }
-                                    )
+                        
+                        // Date Filter as a Dropdown Chip
+                        val optionsWithCustom = dateLabels.toMutableMap()
+                        optionsWithCustom["custom_trigger"] = "Свой период..."
+                        
+                        val displayLabel = if (dateFilter.startsWith("custom|")) "Свой период" else (dateLabels[dateFilter] ?: "Период")
+                        
+                        FilterDropdownChip(
+                            label = displayLabel,
+                            options = optionsWithCustom,
+                            onItemSelected = { key ->
+                                if (key == "custom_trigger") {
+                                    showDatePicker = true
+                                } else {
+                                    viewModel.historyDateFilter.value = key
                                 }
                             }
-                        }
+                        )
                     }
                 }
             }
@@ -149,7 +129,7 @@ fun JournalScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(events, key = { it.id }) { event ->
-                        HistoryEventCard(event)
+                        EventItemCard(event)
                     }
                 }
             }
@@ -168,39 +148,75 @@ fun JournalScreen(
 }
 
 @Composable
-fun HistoryEventCard(event: HistoryEvent) {
+fun EventItemCard(event: HistoryEvent) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val (icon, iconTint) = when (event) {
-                is HistoryEvent.VisitEvent -> Pair(Icons.Default.CheckCircle, GymGreenSuccess)
-                is HistoryEvent.SaleEvent -> Pair(Icons.Default.ShoppingBag, GymAmberAlert)
-                is HistoryEvent.MembershipEvent -> Pair(Icons.Default.CardMembership, GymPrimaryIndigo)
+            val (icon, tint) = when (event) {
+                is HistoryEvent.VisitEvent -> Pair(Icons.Default.CheckCircle, MaterialTheme.colorScheme.primary)
+                is HistoryEvent.SaleEvent -> Pair(Icons.Default.ShoppingBag, MaterialTheme.colorScheme.primary)
+                is HistoryEvent.MembershipEvent -> Pair(Icons.Default.CardMembership, MaterialTheme.colorScheme.primary)
             }
 
-            Icon(imageVector = icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(22.dp))
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(tint.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+            }
 
             Spacer(modifier = Modifier.width(10.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(event.title, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
-                Spacer(modifier = Modifier.height(1.dp))
-                Text("Клиент: ${event.clientName}", style = MaterialTheme.typography.labelSmall, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
-                Text(event.timestamp.formatAsReadableDate(), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold), color = GymGreenSuccess)
-                Text(event.description, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = event.clientName, 
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), 
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                Spacer(modifier = Modifier.height(2.dp))
+                
+                val cleanTitle = event.title.replace(" Продажа абонемента: ", "Абонемент: ").replace(" Продажа товара: ", "Товар: ")
+                Text(
+                    text = cleanTitle, 
+                    style = MaterialTheme.typography.labelSmall, 
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                Text(
+                    text = event.timestamp.formatAsReadableDate(), 
+                    style = MaterialTheme.typography.labelSmall, 
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             if (event.amount != null) {
+                Spacer(modifier = Modifier.width(8.dp))
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("+${event.amount?.toInt()} сомони", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = GymGreenSuccess)
-                    Text(if (event.paymentMethod == "cash") "Наличные" else "Карта", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = "+ ${event.amount?.toInt()} SM", 
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), 
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = if (event.paymentMethod == "cash") "Наличные" else "Карта", 
+                        style = MaterialTheme.typography.labelSmall, 
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

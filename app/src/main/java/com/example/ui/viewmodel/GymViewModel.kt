@@ -36,13 +36,13 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
 
     // Client Search & Filter
     val searchQuery = MutableStateFlow("")
-    val selectedFilterCategory = MutableStateFlow("all") // "all", "visits", "days", "expiring"
+    val selectedFilterCategories = MutableStateFlow<Set<String>>(emptySet()) // "visits", "days", "expiring"
 
     val clients: StateFlow<List<Client>> = combine(
         searchQuery,
-        selectedFilterCategory,
+        selectedFilterCategories,
         gymRepository.searchClients("")
-    ) { query, category, allClients ->
+    ) { query, categories, allClients ->
         var list = if (query.isBlank()) {
             allClients
         } else {
@@ -53,10 +53,14 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
-        when (category) {
-            "visits" -> list = list.filter { it.activeMembership?.durationType == "visits" }
-            "days" -> list = list.filter { it.activeMembership?.durationType == "days" }
-            "expiring" -> list = list.filter { it.activeMembership?.isExpired == true || (it.activeMembership?.visitsLeft ?: 99) <= 2 }
+        if (categories.isNotEmpty() && !categories.contains("all")) {
+            list = list.filter { client ->
+                val active = client.activeMembership
+                val matchesVisits = categories.contains("visits") && active?.durationType == "visits"
+                val matchesDays = categories.contains("days") && active?.durationType == "days"
+                val matchesExpiring = categories.contains("expiring") && (active?.isExpired == true || (active?.visitsLeft ?: 99) <= 2)
+                matchesVisits || matchesDays || matchesExpiring
+            }
         }
 
         list
@@ -82,13 +86,13 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Products
-    val productCategoryFilter = MutableStateFlow("all")
+    val productCategoryFilters = MutableStateFlow<Set<String>>(emptySet())
     val productSearchQuery = MutableStateFlow("")
 
-    val products: StateFlow<List<Product>> = combine(productCategoryFilter, productSearchQuery) { cat, q ->
-        Pair(cat, q)
-    }.flatMapLatest { (cat, q) ->
-        gymRepository.getProductsAdmin(cat, q)
+    val products: StateFlow<List<Product>> = combine(productCategoryFilters, productSearchQuery) { cats, q ->
+        Pair(cats, q)
+    }.flatMapLatest { (cats, q) ->
+        gymRepository.getProductsAdmin(cats, q)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Membership Types
@@ -99,13 +103,13 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // History Timeline
-    val historyTypeFilter = MutableStateFlow("all")
+    val historyTypeFilters = MutableStateFlow<Set<String>>(emptySet())
     val historyDateFilter = MutableStateFlow("today")
 
-    val historyEvents: StateFlow<List<HistoryEvent>> = combine(historyTypeFilter, historyDateFilter) { type, date ->
-        Pair(type, date)
-    }.flatMapLatest { (type, date) ->
-        gymRepository.getHistoryEvents(type, date)
+    val historyEvents: StateFlow<List<HistoryEvent>> = combine(historyTypeFilters, historyDateFilter) { types, date ->
+        Pair(types, date)
+    }.flatMapLatest { (types, date) ->
+        gymRepository.getHistoryEvents(types, date)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Dashboard Stats & Reports with Date Range Filter

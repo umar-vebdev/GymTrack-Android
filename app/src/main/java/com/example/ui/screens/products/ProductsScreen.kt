@@ -1,10 +1,10 @@
 package com.example.ui.screens.products
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -22,8 +22,11 @@ import androidx.compose.ui.unit.sp
 import com.example.domain.model.Client
 import com.example.domain.model.Product
 import com.example.ui.components.CustomDropdownFilter
+import com.example.ui.components.FilterChip
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.GymViewModel
+
+import com.example.ui.components.GlobalSettingsButton
 
 @Composable
 fun ProductsScreen(
@@ -32,7 +35,7 @@ fun ProductsScreen(
 ) {
     val products by viewModel.products.collectAsState()
     val clients by viewModel.clients.collectAsState()
-    val categoryFilter by viewModel.productCategoryFilter.collectAsState()
+    val categoryFilters by viewModel.productCategoryFilters.collectAsState()
     val searchQuery by viewModel.productSearchQuery.collectAsState()
 
     var showAddProductDialog by remember { mutableStateOf(false) }
@@ -46,31 +49,65 @@ fun ProductsScreen(
 
             // Search and Category Header
             Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
-                Column(modifier = Modifier.statusBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp)) {
-                    // Sleek Compact Product Search Bar
-                    CompactProductSearchField(
-                        value = searchQuery,
-                        onValueChange = { viewModel.productSearchQuery.value = it },
-                        placeholderText = "Поиск по каталогу товаров..."
+                Column {
+                    @OptIn(ExperimentalMaterial3Api::class)
+                    CenterAlignedTopAppBar(
+                        title = { Text("Товары", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) },
+                        actions = {
+                            GlobalSettingsButton(viewModel = viewModel)
+                        },
+                        windowInsets = WindowInsets(0.dp),
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = MaterialTheme.colorScheme.onSurface
+                        )
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                        // Sleek Compact Product Search Bar
+                        CompactProductSearchField(
+                            value = searchQuery,
+                            onValueChange = { viewModel.productSearchQuery.value = it },
+                            placeholderText = "Поиск по каталогу товаров..."
+                        )
 
-                    CustomDropdownFilter(
-                        options = mapOf(
-                            "all" to "Все товары",
-                            "drinks" to "Напитки",
-                            "supplements" to "Спортпит",
-                            "equipment" to "Экипировка"
-                        ),
-                        selectedKey = categoryFilter,
-                        onItemSelected = { viewModel.productCategoryFilter.value = it },
-                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                    val categoryOptions = mapOf(
+                        "all" to "Все товары",
+                        "drinks" to "Напитки",
+                        "supplements" to "Спортпит",
+                        "equipment" to "Экипировка"
                     )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        categoryOptions.forEach { (key, label) ->
+                            val isSelected = categoryFilters.contains(key)
+                            FilterChip(
+                                label = label,
+                                isSelected = isSelected,
+                                onClick = {
+                                    val newSet = if (key == "all") {
+                                        setOf("all")
+                                    } else {
+                                        val mutable = categoryFilters.toMutableSet()
+                                        mutable.remove("all")
+                                        if (mutable.contains(key)) mutable.remove(key) else mutable.add(key)
+                                        if (mutable.isEmpty()) setOf("all") else mutable
+                                    }
+                                    viewModel.productCategoryFilters.value = newSet
+                                }
+                            )
+                        }
+                    }
                 }
             }
+        }
 
-            // Products List
+        // Products List
             if (products.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -154,12 +191,11 @@ fun ProductsScreen(
 fun CompactProductSearchField(
     value: String,
     onValueChange: (String) -> Unit,
-    placeholderText: String
+    placeholderText: String,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(44.dp),
+        modifier = modifier.height(44.dp),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
     ) {
@@ -216,20 +252,20 @@ fun ProductItemCard(
     onEditClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { onEditClick() },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(10.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(GymIndigoContainer),
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -240,7 +276,7 @@ fun ProductItemCard(
                         else -> Icons.Default.ShoppingBag
                     },
                     contentDescription = null,
-                    tint = GymPrimaryIndigo,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -267,10 +303,6 @@ fun ProductItemCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
-
-            IconButton(onClick = onEditClick, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
             }
 
             Spacer(modifier = Modifier.width(4.dp))
@@ -484,15 +516,19 @@ fun GeneralSellProductDialog(
 
                 LazyColumn(modifier = Modifier.heightIn(max = 150.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(clients) { c ->
+                        val isSelected = selectedClientId == c.id
                         Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (selectedClientId == c.id) GymIndigoContainer else MaterialTheme.colorScheme.surfaceVariant)
-                                .padding(10.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                             onClick = { selectedClientId = c.id }
                         ) {
-                            Text("${c.fullName} (${c.clientCode})", color = GymTextPrimary, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "${c.fullName} (${c.clientCode})",
+                                modifier = Modifier.padding(12.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -510,20 +546,20 @@ fun GeneralSellProductDialog(
                     }
                 }
 
-                Text("Сумма: ${(product.price * quantity).toInt()} сомони", style = MaterialTheme.typography.titleMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
+                Text("Сумма: ${(product.price * quantity).toInt()} сомони", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = paymentMethod == "cash",
                         onClick = { paymentMethod = "cash" },
                         label = { Text("Наличные") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GymPrimaryIndigo, selectedLabelColor = Color.White)
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = MaterialTheme.colorScheme.onPrimary)
                     )
                     FilterChip(
                         selected = paymentMethod == "card",
                         onClick = { paymentMethod = "card" },
                         label = { Text("Карта") },
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GymPrimaryIndigo, selectedLabelColor = Color.White)
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = MaterialTheme.colorScheme.onPrimary)
                     )
                 }
             }
@@ -532,11 +568,12 @@ fun GeneralSellProductDialog(
             Button(
                 onClick = { onSell(selectedClientId, quantity, paymentMethod) },
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Оформить продажу", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("Оформить продажу", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена", color = MaterialTheme.colorScheme.onSurfaceVariant) } }
     )
 }
+

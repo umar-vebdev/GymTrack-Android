@@ -331,14 +331,14 @@ class GymRepository(private val db: GymDatabase) {
         }
     }
 
-    fun getProductsAdmin(category: String? = null, query: String = ""): Flow<List<Product>> {
+    fun getProductsAdmin(categories: Set<String> = emptySet(), query: String = ""): Flow<List<Product>> {
         val flow = if (query.isBlank()) productDao.getAllProductsAdmin() else productDao.searchProductsAdmin(query)
         return flow.map { list ->
             list.filter { 
-                category == null || 
-                category == "all" || 
-                (category == "inactive" && !it.isActive) ||
-                it.category.equals(category, ignoreCase = true) 
+                categories.isEmpty() || 
+                categories.contains("all") || 
+                (categories.contains("inactive") && !it.isActive) ||
+                categories.contains(it.category.lowercase()) 
             }.map {
                     Product(
                         id = it.id,
@@ -450,7 +450,7 @@ class GymRepository(private val db: GymDatabase) {
     }
 
     // 5. GLOBAL JOURNAL (POLYMORPHIC HISTORY STREAM)
-    fun getHistoryEvents(filterType: String = "all", dateFilter: String = "all"): Flow<List<HistoryEvent>> {
+    fun getHistoryEvents(filterTypes: Set<String> = emptySet(), dateFilter: String = "all"): Flow<List<HistoryEvent>> {
         val todayStr = dayFormat.format(Date())
 
         val cal = Calendar.getInstance()
@@ -478,8 +478,10 @@ class GymRepository(private val db: GymDatabase) {
             val typeMap = mTypes.associateBy { it.id }
 
             val events = mutableListOf<HistoryEvent>()
+            
+            val isAll = filterTypes.isEmpty() || filterTypes.contains("all")
 
-            if (filterType == "all" || filterType == "visit") {
+            if (isAll || filterTypes.contains("visit")) {
                 visits.forEach { v ->
                     val c = clientMap[v.clientId]
                     events.add(
@@ -494,7 +496,7 @@ class GymRepository(private val db: GymDatabase) {
                 }
             }
 
-            if (filterType == "all" || filterType == "product_sale") {
+            if (isAll || filterTypes.contains("product_sale")) {
                 sales.forEach { s ->
                     val c = clientMap[s.clientId]
                     val p = productMap[s.productId]
@@ -512,7 +514,7 @@ class GymRepository(private val db: GymDatabase) {
                 }
             }
 
-            if (filterType == "all" || filterType == "membership_purchase") {
+            if (isAll || filterTypes.contains("membership_purchase")) {
                 purchases.forEach { mp ->
                     val c = clientMap[mp.clientId]
                     val t = typeMap[mp.membershipTypeId]
