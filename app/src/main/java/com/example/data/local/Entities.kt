@@ -67,3 +67,11 @@ data class VisitEntity(
     val membershipPurchaseId: Long,
     val visitedAt: String
 )
+
+@Entity(tableName = "currencies")
+data class CurrencyEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String, // e.g. "Сомони"
+    val code: String, // e.g. "TJS"
+    val isSelected: Boolean = false
+)

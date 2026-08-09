@@ -1,6 +1,7 @@
 package com.example.ui.screens.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,7 +29,11 @@ fun SettingsScreen(
     val systemIsDark = isSystemInDarkTheme()
     val currentlyDark = isDarkModeState ?: systemIsDark
 
+    val currencies by viewModel.currencies.collectAsState()
+    val selectedCurrency by viewModel.selectedCurrency.collectAsState()
+
     var passwordVisible by remember { mutableStateOf(false) }
+    var showCurrencyDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -170,10 +175,128 @@ fun SettingsScreen(
                     }
                     Switch(
                         checked = currentlyDark,
-                        onCheckedChange = { viewModel.toggleTheme(systemIsDark) }
+                        onCheckedChange = { viewModel.toggleTheme(systemIsDark) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = androidx.compose.ui.graphics.Color.White,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary,
+                            uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                            uncheckedBorderColor = androidx.compose.ui.graphics.Color.Transparent
+                        )
                     )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp, start = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Валюта",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = GymPrimaryIndigo
+                )
+                TextButton(onClick = { showCurrencyDialog = true }, contentPadding = PaddingValues(0.dp)) {
+                    Text("Добавить", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            ) {
+                Column {
+                    currencies.forEachIndexed { index, currency ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.selectCurrency(currency.id) }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(currency.name, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                                Text(currency.code, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            if (currency.isSelected) {
+                                Icon(Icons.Default.Check, contentDescription = "Выбрано", tint = MaterialTheme.colorScheme.primary)
+                            } else {
+                                IconButton(onClick = { viewModel.deleteCurrency(currency) }, modifier = Modifier.size(24.dp)) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                        }
+                        if (index < currencies.size - 1) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                        }
+                    }
                 }
             }
         }
     }
+
+    if (showCurrencyDialog) {
+        AddCurrencyDialog(
+            onDismiss = { showCurrencyDialog = false },
+            onAdd = { name, code ->
+                viewModel.addCurrency(name, code)
+                showCurrencyDialog = false
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddCurrencyDialog(
+    onDismiss: () -> Unit,
+    onAdd: (String, String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var code by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Добавить валюту", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Название (напр. Рубль)") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { code = it },
+                    label = { Text("Код (напр. RUS)") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onAdd(name, code) },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo),
+                enabled = name.isNotBlank() && code.isNotBlank()
+            ) {
+                Text("Сохранить", color = androidx.compose.ui.graphics.Color.White, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Отмена") }
+        }
+    )
 }

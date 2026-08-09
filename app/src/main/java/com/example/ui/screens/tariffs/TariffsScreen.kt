@@ -30,6 +30,8 @@ fun TariffsScreen(
     modifier: Modifier = Modifier
 ) {
     val tariffs by viewModel.membershipTypesAdmin.collectAsState()
+    val selectedCurrency by viewModel.selectedCurrency.collectAsState()
+    val cCode = selectedCurrency?.code ?: "TJS"
 
     var showEditDialog by remember { mutableStateOf(false) }
     var selectedTariff by remember { mutableStateOf<MembershipType?>(null) }
@@ -70,6 +72,7 @@ fun TariffsScreen(
                     items(tariffs, key = { it.id }) { tariff ->
                         TariffItemCard(
                             tariff = tariff,
+                            currencyCode = cCode,
                             onEditClick = {
                                 selectedTariff = tariff
                                 showEditDialog = true
@@ -122,6 +125,7 @@ fun TariffsScreen(
 @Composable
 fun TariffItemCard(
     tariff: MembershipType,
+    currencyCode: String,
     onEditClick: () -> Unit
 ) {
     Card(
@@ -161,7 +165,7 @@ fun TariffItemCard(
                 val durationText = if (tariff.durationType == "days") "${tariff.durationValue} дней" else "${tariff.durationValue} визитов"
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "${tariff.price.toInt()} сомони",
+                        "${tariff.price.toInt()} $currencyCode",
                         style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                         color = GymPrimaryIndigo
                     )
@@ -227,7 +231,7 @@ fun TariffDialog(
                     OutlinedTextField(
                         value = priceStr,
                         onValueChange = { priceStr = it },
-                        label = { Text("Цена (сомони)") },
+                        label = { Text("Цена") },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()

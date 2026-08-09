@@ -39,6 +39,8 @@ fun AnalyticsScreen(
     val stats by viewModel.dashboardStats.collectAsState()
     val dateFilter by viewModel.analyticsDateFilter.collectAsState()
     val expiringList by viewModel.expiringMemberships.collectAsState()
+    val selectedCurrency by viewModel.selectedCurrency.collectAsState()
+    val cCode = selectedCurrency?.code ?: "TJS"
     val context = LocalContext.current
 
     var showDatePicker by remember { mutableStateOf(false) }
@@ -107,7 +109,7 @@ fun AnalyticsScreen(
                     ) {
                         StatCard(
                             title = "Выручка",
-                            value = "${stats.todayRevenue.toInt()} сомони",
+                            value = "${stats.todayRevenue.toInt()} $cCode",
                             icon = Icons.Default.Payments,
                             accentColor = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.weight(1f).fillMaxHeight()
@@ -199,12 +201,12 @@ fun AnalyticsScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(GymGreenSuccess))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Наличные: ${stats.cashRevenue.toInt()} сомони", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+                                Text("Наличные: ${stats.cashRevenue.toInt()} $cCode", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(modifier = Modifier.size(8.dp).clip(RoundedCornerShape(2.dp)).background(GymPrimaryIndigo))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Карта: ${stats.cardRevenue.toInt()} сомони", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+                                Text("Карта: ${stats.cardRevenue.toInt()} $cCode", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
                             }
                         }
                     }

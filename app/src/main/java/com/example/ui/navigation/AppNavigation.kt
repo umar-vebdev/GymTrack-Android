@@ -63,6 +63,25 @@ fun AppNavigation(viewModel: GymViewModel) {
 
     val selectedClient by viewModel.selectedClient.collectAsState()
 
+    // 1. Intercept system back for Settings screen
+    androidx.activity.compose.BackHandler(enabled = showSettingsScreen) {
+        showSettingsScreen = false
+    }
+
+    // 2. Intercept system back for Phone Client Detail screen
+    androidx.activity.compose.BackHandler(
+        enabled = !showSettingsScreen && !isTablet && currentDestination == NavDestination.CLIENTS && phoneShowDetailScreen
+    ) {
+        phoneShowDetailScreen = false
+    }
+
+    // 3. Intercept system back to return to main tab (CLIENTS) if on another tab
+    androidx.activity.compose.BackHandler(
+        enabled = !showSettingsScreen && (!phoneShowDetailScreen || isTablet) && currentDestination != NavDestination.CLIENTS
+    ) {
+        currentDestination = NavDestination.CLIENTS
+    }
+
     if (showSettingsScreen) {
         SettingsScreen(
             viewModel = viewModel,

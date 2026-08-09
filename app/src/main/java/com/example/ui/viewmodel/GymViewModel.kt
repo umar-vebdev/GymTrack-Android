@@ -281,4 +281,31 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Currencies
+    val currencies: StateFlow<List<Currency>> = gymRepository.getAllCurrencies()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val selectedCurrency: StateFlow<Currency?> = gymRepository.getSelectedCurrency()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    fun addCurrency(name: String, code: String) {
+        viewModelScope.launch {
+            if (name.isNotBlank() && code.isNotBlank()) {
+                gymRepository.addCurrency(name, code)
+            }
+        }
+    }
+
+    fun selectCurrency(id: Long) {
+        viewModelScope.launch {
+            gymRepository.selectCurrency(id)
+        }
+    }
+
+    fun deleteCurrency(currency: Currency) {
+        viewModelScope.launch {
+            if (currency.isSelected) return@launch // Prevent deleting selected currency
+            gymRepository.deleteCurrency(currency.id, currency.name, currency.code, currency.isSelected)
+        }
+    }
 }

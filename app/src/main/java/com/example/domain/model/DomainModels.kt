@@ -121,6 +121,13 @@ data class DashboardStats(
     val cardRevenue: Double
 )
 
+data class Currency(
+    val id: Long,
+    val name: String,
+    val code: String,
+    val isSelected: Boolean
+)
+
 data class ExpiringMembershipInfo(
     val clientId: Long,
     val clientCode: String,

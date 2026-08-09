@@ -16,7 +16,6 @@ object DatabaseInitializer {
         val existingType = membershipDao.getMembershipTypeById(1)
         if (existingType != null) return@withContext
 
-        // Seed Default Membership Types (Tariffs) needed for offline operation
         val mTypes = listOf(
             MembershipTypeEntity(id = 1, name = "12 Занятий (1 Месяц)", durationType = "visits", durationValue = 12, price = 3500.0),
             MembershipTypeEntity(id = 2, name = "Безлимит 1 Месяц", durationType = "days", durationValue = 30, price = 4800.0),
@@ -25,5 +24,9 @@ object DatabaseInitializer {
             MembershipTypeEntity(id = 5, name = "Годовой Персональный", durationType = "days", durationValue = 365, price = 39000.0)
         )
         mTypes.forEach { membershipDao.insertMembershipType(it) }
+
+        // Seed Default Currency
+        val currencyDao = db.currencyDao()
+        currencyDao.insertCurrency(CurrencyEntity(id = 1, name = "Сомони", code = "TJS", isSelected = true))
     }
 }

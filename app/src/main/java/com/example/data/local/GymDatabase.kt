@@ -12,9 +12,10 @@ import androidx.room.RoomDatabase
         MembershipPurchaseEntity::class,
         ProductEntity::class,
         ProductSaleEntity::class,
-        VisitEntity::class
+        VisitEntity::class,
+        CurrencyEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -23,6 +24,7 @@ abstract class GymDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
     abstract fun saleDao(): SaleDao
     abstract fun visitDao(): VisitDao
+    abstract fun currencyDao(): CurrencyDao
 
     companion object {
         @Volatile

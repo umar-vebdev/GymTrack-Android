@@ -691,6 +691,34 @@ class GymRepository(private val db: GymDatabase) {
         }
     }
 
+    // 7. CURRENCY
+    val currencyDao = db.currencyDao()
+
+    fun getAllCurrencies(): Flow<List<Currency>> = currencyDao.getAllCurrencies().map { list ->
+        list.map { Currency(it.id, it.name, it.code, it.isSelected) }
+    }
+
+    fun getSelectedCurrency(): Flow<Currency?> = currencyDao.getSelectedCurrency().map { it?.let { Currency(it.id, it.name, it.code, it.isSelected) } }
+
+    suspend fun addCurrency(name: String, code: String) {
+        withContext(Dispatchers.IO) {
+            currencyDao.insertCurrency(CurrencyEntity(name = name, code = code))
+        }
+    }
+
+    suspend fun selectCurrency(id: Long) {
+        withContext(Dispatchers.IO) {
+            currencyDao.clearSelection()
+            currencyDao.selectCurrency(id)
+        }
+    }
+
+    suspend fun deleteCurrency(id: Long, name: String, code: String, isSelected: Boolean) {
+        withContext(Dispatchers.IO) {
+            currencyDao.deleteCurrency(CurrencyEntity(id, name, code, isSelected))
+        }
+    }
+
     private fun calculateDaysUntil(targetDateStr: String): Int {
         return try {
             val target = dayFormat.parse(targetDateStr) ?: return 999

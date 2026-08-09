@@ -37,6 +37,8 @@ fun ProductsScreen(
     val clients by viewModel.clients.collectAsState()
     val categoryFilters by viewModel.productCategoryFilters.collectAsState()
     val searchQuery by viewModel.productSearchQuery.collectAsState()
+    val selectedCurrency by viewModel.selectedCurrency.collectAsState()
+    val cCode = selectedCurrency?.code ?: "TJS"
 
     var showAddProductDialog by remember { mutableStateOf(false) }
     var showEditProductDialog by remember { mutableStateOf(false) }
@@ -124,6 +126,7 @@ fun ProductsScreen(
                     items(products, key = { it.id }) { product ->
                         ProductItemCard(
                             product = product,
+                            currencyCode = cCode,
                             onSellClick = {
                                 selectedProductForSale = product
                                 showQuickSellDialog = true
@@ -161,6 +164,7 @@ fun ProductsScreen(
         if (showQuickSellDialog && selectedProductForSale != null) {
             GeneralSellProductDialog(
                 product = selectedProductForSale!!,
+                currencyCode = cCode,
                 clients = clients,
                 onDismiss = { showQuickSellDialog = false },
                 onSell = { clientId, qty, method ->
@@ -248,6 +252,7 @@ fun CompactProductSearchField(
 @Composable
 fun ProductItemCard(
     product: Product,
+    currencyCode: String,
     onSellClick: () -> Unit,
     onEditClick: () -> Unit
 ) {
@@ -292,7 +297,7 @@ fun ProductItemCard(
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "${product.price.toInt()} сомони",
+                        "${product.price.toInt()} $currencyCode",
                         style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                         color = GymPrimaryIndigo
                     )
@@ -347,7 +352,7 @@ fun AddProductDialog(
                 OutlinedTextField(
                     value = priceStr,
                     onValueChange = { priceStr = it },
-                    label = { Text("Цена (сомони)") },
+                    label = { Text("Цена") },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -441,7 +446,7 @@ fun EditProductDialog(
                     OutlinedTextField(
                         value = priceStr,
                         onValueChange = { priceStr = it },
-                        label = { Text("Цена (сомони)") },
+                        label = { Text("Цена") },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
@@ -498,6 +503,7 @@ fun EditProductDialog(
 @Composable
 fun GeneralSellProductDialog(
     product: Product,
+    currencyCode: String,
     clients: List<Client>,
     onDismiss: () -> Unit,
     onSell: (clientId: Long, quantity: Int, paymentMethod: String) -> Unit
@@ -546,7 +552,7 @@ fun GeneralSellProductDialog(
                     }
                 }
 
-                Text("Сумма: ${(product.price * quantity).toInt()} сомони", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Text("Сумма: ${(product.price * quantity).toInt()} $currencyCode", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(

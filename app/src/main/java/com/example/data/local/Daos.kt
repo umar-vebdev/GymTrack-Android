@@ -145,3 +145,24 @@ interface VisitDao {
     @Query("SELECT COUNT(*) FROM visits WHERE visitedAt >= :startOfDay")
     fun getTodayVisitsCount(startOfDay: String): Flow<Int>
 }
+
+@Dao
+interface CurrencyDao {
+    @Query("SELECT * FROM currencies ORDER BY name ASC")
+    fun getAllCurrencies(): Flow<List<CurrencyEntity>>
+
+    @Query("SELECT * FROM currencies WHERE isSelected = 1 LIMIT 1")
+    fun getSelectedCurrency(): Flow<CurrencyEntity?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCurrency(currency: CurrencyEntity): Long
+
+    @Query("UPDATE currencies SET isSelected = 0 WHERE isSelected = 1")
+    suspend fun clearSelection()
+
+    @Query("UPDATE currencies SET isSelected = 1 WHERE id = :id")
+    suspend fun selectCurrency(id: Long)
+
+    @Delete
+    suspend fun deleteCurrency(currency: CurrencyEntity)
+}

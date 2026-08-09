@@ -58,6 +58,8 @@ fun ClientDetailScreen(
     val sales by viewModel.selectedClientSales.collectAsState()
     val membershipTypes by viewModel.membershipTypes.collectAsState()
     val products by viewModel.products.collectAsState()
+    val selectedCurrency by viewModel.selectedCurrency.collectAsState()
+    val cCode = selectedCurrency?.code ?: "TJS"
 
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     var showPurchaseTariffModal by remember { mutableStateOf(false) }
@@ -172,16 +174,14 @@ fun ClientDetailScreen(
                         if (purchases.isEmpty()) {
                             item { EmptyStateText("Купленных абонементов нет") }
                         } else {
-                            items(purchases) { purchase -> 
-                                PurchaseHistoryItem(purchase, client)
-                            }
+                            item { TabPurchasesView(purchases, cCode) }
                         }
                     }
                     2 -> {
                         if (sales.isEmpty()) {
                             item { EmptyStateText("Покупок товаров нет") }
                         } else {
-                            items(sales) { sale -> ProductSaleHistoryItem(sale) }
+                            item { TabSalesView(sales, cCode) }
                         }
                     }
                 }
@@ -190,11 +190,12 @@ fun ClientDetailScreen(
 
         // Modals
         if (showPurchaseTariffModal) {
-            PurchaseTariffModal(
+            SellMembershipDialog(
                 client = client,
                 membershipTypes = membershipTypes,
+                currencyCode = cCode,
                 onDismiss = { showPurchaseTariffModal = false },
-                onPurchase = { typeId, method ->
+                onSell = { typeId, method ->
                     viewModel.purchaseMembership(client.id, typeId, method)
                     showPurchaseTariffModal = false
                 }
@@ -202,9 +203,10 @@ fun ClientDetailScreen(
         }
 
         if (showSellProductModal) {
-            SellProductModal(
+            SellProductDialog(
                 client = client,
                 products = products,
+                currencyCode = cCode,
                 onDismiss = { showSellProductModal = false },
                 onSell = { productId, qty, method ->
                     viewModel.sellProduct(client.id, productId, qty, method)
@@ -486,50 +488,40 @@ fun VisitHistoryItem(visit: Visit, onCancel: () -> Unit) {
 }
 
 @Composable
-fun PurchaseHistoryItem(purchase: MembershipPurchase, client: Client) {
-    val isActive = client.activeMembership?.purchaseId == purchase.id
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val iconTint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(iconTint.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
+fun TabPurchasesView(
+    purchaseHistory: List<MembershipPurchase>,
+    currencyCode: String
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        purchaseHistory.forEach { purchase ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.Default.CardMembership, contentDescription = null, tint = iconTint, modifier = Modifier.size(18.dp))
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = purchase.membershipTypeName, 
-                    style = MaterialTheme.typography.bodyMedium, 
-                    color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
-                )
-                Text("Сумма: ${purchase.amountPaid.toInt()} сомони (${if (purchase.paymentMethod == "cash") "Наличные" else "Карта"})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("C ${purchase.startsAt.formatAsReadableDate()} до ${purchase.expiresAt?.formatAsReadableDate() ?: "—"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            if (isActive) {
-                Surface(
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = RoundedCornerShape(6.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "АКТИВНЫЙ",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.CardMembership, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = purchase.membershipTypeName, 
+                            style = MaterialTheme.typography.bodyMedium, 
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text("Сумма: ${purchase.amountPaid.toInt()} $currencyCode (${if (purchase.paymentMethod == "cash") "Наличные" else "Карта"})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("C ${purchase.startsAt.formatAsReadableDate()} до ${purchase.expiresAt?.formatAsReadableDate() ?: "—"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }
@@ -537,29 +529,36 @@ fun PurchaseHistoryItem(purchase: MembershipPurchase, client: Client) {
 }
 
 @Composable
-fun ProductSaleHistoryItem(sale: ProductSale) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(GymAmberAlert.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
+fun TabSalesView(
+    salesHistory: List<ProductSale>,
+    currencyCode: String
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        salesHistory.forEach { sale ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.Default.ShoppingBag, contentDescription = null, tint = GymAmberAlert, modifier = Modifier.size(18.dp))
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text("${sale.productName} (x${sale.quantity})", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-                Text("${sale.totalPrice.toInt()} сомони (${if (sale.paymentMethod == "cash") "Наличные" else "Карта"})", style = MaterialTheme.typography.labelSmall, color = GymGreenSuccess)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(GymAmberAlert.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.ShoppingBag, contentDescription = null, tint = GymAmberAlert, modifier = Modifier.size(18.dp))
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("${sale.productName} (x${sale.quantity})", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                        Text("${sale.totalPrice.toInt()} $currencyCode (${if (sale.paymentMethod == "cash") "Наличные" else "Карта"})", style = MaterialTheme.typography.labelSmall, color = GymGreenSuccess)
+                    }
+                }
             }
         }
     }
@@ -575,15 +574,14 @@ fun EmptyStateText(text: String) {
     }
 }
 
-// Modal - Purchase Tariff
-// Modal - Purchase Tariff
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PurchaseTariffModal(
+fun SellMembershipDialog(
     client: Client,
     membershipTypes: List<com.example.domain.model.MembershipType>,
+    currencyCode: String,
     onDismiss: () -> Unit,
-    onPurchase: (typeId: Long, paymentMethod: String) -> Unit
+    onSell: (typeId: Long, paymentMethod: String) -> Unit
 ) {
     var selectedTypeId by remember { mutableLongStateOf(membershipTypes.firstOrNull()?.id ?: 1L) }
     var paymentMethod by remember { mutableStateOf("card") }
@@ -634,7 +632,7 @@ fun PurchaseTariffModal(
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text("${type.durationValue} ${if (type.durationType == "visits") "визитов" else "дней"}", style = MaterialTheme.typography.labelSmall, color = GymTextSecondary)
                             }
-                            Text("${type.price.toInt()} сомони", style = MaterialTheme.typography.bodyMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
+                            Text("${type.price.toInt()} $currencyCode", style = MaterialTheme.typography.bodyMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -665,7 +663,7 @@ fun PurchaseTariffModal(
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                onClick = { onPurchase(selectedTypeId, paymentMethod) },
+                onClick = { onSell(selectedTypeId, paymentMethod) },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo)
@@ -676,12 +674,12 @@ fun PurchaseTariffModal(
     }
 }
 
-// Modal - Sell Product to Client
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SellProductModal(
+fun SellProductDialog(
     client: Client,
     products: List<Product>,
+    currencyCode: String,
     onDismiss: () -> Unit,
     onSell: (productId: Long, quantity: Int, paymentMethod: String) -> Unit
 ) {
@@ -728,7 +726,7 @@ fun SellProductModal(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(prod.name, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                            Text("${prod.price.toInt()} сомони", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            Text("${prod.price.toInt()} $currencyCode", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -792,7 +790,7 @@ fun SellProductModal(
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = GymPrimaryIndigo)
             ) {
-                Text("ОПЛАТИТЬ: ${total.toInt()} СОМОНИ", color = Color.White, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold))
+                Text("ОПЛАТИТЬ: ${total.toInt()} ${currencyCode.uppercase()}", color = Color.White, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold))
             }
         }
     }
