@@ -1,5 +1,7 @@
 package com.example.ui.screens.auth
 
+import android.content.pm.PackageManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -88,7 +90,7 @@ fun LoginScreen(viewModel: GymViewModel) {
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email или телефон сотрудника") },
+                    label = { Text("Email") },
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -139,8 +141,27 @@ fun LoginScreen(viewModel: GymViewModel) {
                         color = Color.White
                     )
                 }
-
             }
         }
+
+        // Version Text at the absolute bottom of the screen
+        val context = LocalContext.current
+        val packageInfo = remember {
+            try {
+                context.packageManager.getPackageInfo(context.packageName, 0)
+            } catch (e: Exception) {
+                null
+            }
+        }
+        val versionName = packageInfo?.versionName ?: "1.0.0"
+
+        Text(
+            text = "v$versionName",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp)
+        )
     }
 }

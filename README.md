@@ -1,22 +1,43 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# GymTrack 🏋️‍♂️
 
-# Run and deploy your AI Studio app
+GymTrack — это полноценное, полностью оффлайн-приложение для администраторов тренажерных залов и фитнес-клубов. Создано для локального управления базой клиентов, продажами абонементов, историей посещений и аналитикой без привязки к серверам или интернету.
 
-This contains everything you need to run your app locally.
+## Основной функционал
 
-View your app in AI Studio: https://ai.studio/apps/1d7efc90-2122-4afc-af74-6e96ceb49c55
+- **Клиенты:** Регистрация клиентов, присвоение уникальных кодов (GT-xxxx) и генерация личных профилей.
+- **Абонементы (Тарифы):** Учет купленных, активных и истекших абонементов. Умный биллинг на базе количества визитов или календарных дней.
+- **Журнал посещений:** Быстрая фиксация посещений и автоматическое списание визитов с привязанного абонемента.
+- **Магазин товаров:** Система складского учета (вода, протеин и пр.) и проведение быстрых продаж с выбором типа оплаты (наличные/карта).
+- **Аналитика:** Детальные дашборды с графиками доходов и конверсией. Полный обзор всех операций системы.
+- **Оффлайн работа и Бэкапы:** Приложение хранит всю математику локально на устройстве (Room Database). Есть встроенная система экспорта и импорта резервных копий в `.json`, гарантирующая безопасность данных.
+- **Современный UI:** Нативный и быстрый интерфейс на Jetpack Compose с поддержкой темной/светлой темы и кастомными системными уведомлениями (Toast Overlay).
 
-## Run Locally
+## Стек технологий
 
-**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
+- **Язык:** Kotlin 1.9+
+- **UI Архитектура:** Declarative UI (Jetpack Compose), Material Design 3
+- **Паттерн:** MVVM (Model-View-ViewModel)
+- **Локальная БД:** Room (SQLite)
+- **Асинхронность:** Kotlin Coroutines & Flow
 
+## Установка и запуск (Для разработчиков)
 
-1. Open Android Studio
-2. Select **Open** and choose the directory containing this project
-3. Allow Android Studio to fix any incompatibilities as it imports the project.
-4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
-5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
-6. Run the app on an emulator or physical device
-7. If you have already published your app in AI Studio, please [request upload key reset](https://support.google.com/googleplay/android-developer/answer/9842756#zippy=%2Crequest-an-upload-key-reset) in Google Play Console.
+1. Клонируйте репозиторий проекта на локальный компьютер.
+2. Откройте проект в **Android Studio** (рекомендуется версия Ladybug или любая поддерживающая Gradle 8+ и Compose).
+3. Дождитесь синхронизации Gradle-проекта.
+4. (Опционально) Игнорируйте предупреждения о Firebase, так как приложение штатно переведено на 100% оффлайн режим, и сетевые ошибки авторизации игнорируются при входе локальным администратором.
+5. Нажмите кнопку **Run (Play)** в Android Studio, чтобы запустить приложение на Android эмуляторе или подключенном физическом Android-устройстве.
+6. _Для входа в приложение используйте любые данные или заранее установленные оффлайн-данные, если интеграция с Firebase была остановлена._
+
+## Логика Базы Данных и Импорта/Экспорта
+
+Вся база хранится внутри SQLite на устройстве. При желании администратора перенести данные на другой планшет или телефон:
+
+1. Зайдите в раздел **Настройки**.
+2. Нажмите **Экспорт данных**. Выберите папку на устройстве.
+3. Сохранившийся `gymtrack_backup_*.json` файл можно переслать по Telegram или Bluetooth.
+4. На новом устройстве выберите **Импортировать данные** и загрузите ваш `.json`.
+
+## Лицензия и Авторство
+
+_This software is provided for private and business use by the repository administrator._

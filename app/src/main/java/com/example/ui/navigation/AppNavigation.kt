@@ -5,10 +5,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,11 +33,12 @@ import com.example.ui.theme.*
 import com.example.ui.viewmodel.GymViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlin.time.Duration.Companion.seconds
 
 enum class NavDestination(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     CLIENTS("Клиенты", Icons.Default.People),
     PRODUCTS("Товары", Icons.Default.Storefront),
-    JOURNAL("Журнал", Icons.Default.ReceiptLong),
+    JOURNAL("Журнал", Icons.AutoMirrored.Filled.ReceiptLong),
     TARIFFS("Тарифы", Icons.Default.CardMembership),
     ANALYTICS("Аналитика", Icons.Default.Assessment)
 }
@@ -53,13 +53,16 @@ fun AppNavigation(viewModel: GymViewModel) {
     LaunchedEffect(Unit) {
         viewModel.uiMessage.collectLatest { msg ->
             toastMessage = msg
-            delay(3000)
+            delay(3.seconds)
             toastMessage = null
         }
     }
 
     if (!isLoggedIn) {
-        LoginScreen(viewModel = viewModel)
+        Box(modifier = Modifier.fillMaxSize()) {
+            LoginScreen(viewModel = viewModel)
+            ToastOverlay(toastMessage)
+        }
         return
     }
 
@@ -67,8 +70,8 @@ fun AppNavigation(viewModel: GymViewModel) {
     val isTablet = configuration.screenWidthDp >= 600
 
     var currentDestination by remember { mutableStateOf(NavDestination.CLIENTS) }
-    var phoneShowDetailScreen by remember { mutableStateOf(false) }
-    var showSettingsScreen by remember { mutableStateOf(false) }
+    var phoneShowDetailScreen by remember { mutableStateOf(value = false) }
+    var showSettingsScreen by remember { mutableStateOf(value = false) }
 
     val selectedClient by viewModel.selectedClient.collectAsState()
 
@@ -79,14 +82,14 @@ fun AppNavigation(viewModel: GymViewModel) {
 
     // 2. Intercept system back for Phone Client Detail screen
     androidx.activity.compose.BackHandler(
-        enabled = !showSettingsScreen && !isTablet && currentDestination == NavDestination.CLIENTS && phoneShowDetailScreen
+        enabled = (!showSettingsScreen && !isTablet && currentDestination == NavDestination.CLIENTS && phoneShowDetailScreen),
     ) {
         phoneShowDetailScreen = false
     }
 
     // 3. Intercept system back to return to main tab (CLIENTS) if on another tab
     androidx.activity.compose.BackHandler(
-        enabled = !showSettingsScreen && (!phoneShowDetailScreen || isTablet) && currentDestination != NavDestination.CLIENTS
+        enabled = (!showSettingsScreen && (!phoneShowDetailScreen || isTablet) && currentDestination != NavDestination.CLIENTS),
     ) {
         currentDestination = NavDestination.CLIENTS
     }
@@ -244,54 +247,58 @@ fun AppNavigation(viewModel: GymViewModel) {
             }
         }
         
-        // Custom Top Snackbar Overlay
-        AnimatedVisibility(
-            visible = toastMessage != null,
-            enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
-            exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 8.dp)
-                .padding(horizontal = 16.dp)
-                .zIndex(100f)
-        ) {
-            toastMessage?.let { msg ->
-                val lowerMsg = msg.lowercase()
-                val isError = lowerMsg.contains("ошибка") || lowerMsg.contains("failed") || lowerMsg.contains("заполните") || lowerMsg.contains("введите") || lowerMsg.contains("истек") || lowerMsg.contains("закончились")
-                val isSuccess = lowerMsg.contains("успешн") || lowerMsg.contains("создан") || lowerMsg.contains("удален") || lowerMsg.contains("оформлен") || lowerMsg.contains("добавлен") || lowerMsg.contains("зафиксирована") || lowerMsg.contains("отменен") || lowerMsg.contains("добро")
-                
-                val bgColor = when {
-                    isError -> GymRoseAlert
-                    isSuccess -> GymGreenSuccess
-                    else -> MaterialTheme.colorScheme.inverseSurface
-                }
-                val textColor = when {
-                    isError || isSuccess -> Color.White
-                    else -> MaterialTheme.colorScheme.inverseOnSurface
-                }
-                val icon = when {
-                    isError -> Icons.Default.ErrorOutline
-                    isSuccess -> Icons.Default.CheckCircle
-                    else -> Icons.Default.Info
-                }
+        ToastOverlay(toastMessage)
+        
+    }
+}
 
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = bgColor),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                    modifier = Modifier.fillMaxWidth().wrapContentHeight()
+@Composable
+fun BoxScope.ToastOverlay(toastMessage: String?) {
+    AnimatedVisibility(
+        visible = toastMessage != null,
+        enter = fadeIn() + slideInVertically { -it },
+        exit = fadeOut() + slideOutVertically { -it },
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 8.dp)
+            .padding(horizontal = 16.dp)
+            .zIndex(100f)
+    ) {
+        toastMessage?.let { msg ->
+            val lowerMsg = msg.lowercase()
+            val isError = lowerMsg.contains("ошибка") || lowerMsg.contains("failed") || lowerMsg.contains("заполните") || lowerMsg.contains("введите") || lowerMsg.contains("истек") || lowerMsg.contains("закончились")
+            val isSuccess = lowerMsg.contains("успешн") || lowerMsg.contains("создан") || lowerMsg.contains("удален") || lowerMsg.contains("оформлен") || lowerMsg.contains("добавлен") || lowerMsg.contains("зафиксирована") || lowerMsg.contains("отменен") || lowerMsg.contains("добро")
+            
+            val bgColor = when {
+                isError -> GymRoseAlert
+                isSuccess -> GymGreenSuccess
+                else -> MaterialTheme.colorScheme.inverseSurface
+            }
+            val textColor = when {
+                isError || isSuccess -> Color.White
+                else -> MaterialTheme.colorScheme.inverseOnSurface
+            }
+            val icon = when {
+                isError -> Icons.Default.ErrorOutline
+                isSuccess -> Icons.Default.CheckCircle
+                else -> Icons.Default.Info
+            }
+
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = bgColor),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                modifier = Modifier.fillMaxWidth().wrapContentHeight()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(imageVector = icon, contentDescription = null, tint = textColor, modifier = Modifier.size(24.dp))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(text = msg.replace("SUCCESS|", "").replace("ERROR|", "").replace("INFO|", ""), color = textColor, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
-                    }
+                    Icon(imageVector = icon, contentDescription = null, tint = textColor, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(text = msg.replace("SUCCESS|", "").replace("ERROR|", "").replace("INFO|", ""), color = textColor, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
                 }
             }
         }
-        
     }
 }

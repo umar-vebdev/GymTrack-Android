@@ -142,17 +142,17 @@ fun ClientDetailScreen(
                         Tab(
                             selected = selectedTabIndex == 0,
                             onClick = { selectedTabIndex = 0 },
-                            text = { Text("Визиты (${visits.size})", color = if (selectedTabIndex == 0) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant) }
+                            text = { Text("Визиты (${visits.size})", maxLines = 1, style = MaterialTheme.typography.labelMedium, color = if (selectedTabIndex == 0) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant) }
                         )
                         Tab(
                             selected = selectedTabIndex == 1,
                             onClick = { selectedTabIndex = 1 },
-                            text = { Text("Абонементы (${purchases.size})", color = if (selectedTabIndex == 1) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant) }
+                            text = { Text("Абонементы (${purchases.size})", maxLines = 1, style = MaterialTheme.typography.labelMedium, color = if (selectedTabIndex == 1) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant) }
                         )
                         Tab(
                             selected = selectedTabIndex == 2,
                             onClick = { selectedTabIndex = 2 },
-                            text = { Text("Товары (${sales.size})", color = if (selectedTabIndex == 2) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant) }
+                            text = { Text("Товары (${sales.size})", maxLines = 1, style = MaterialTheme.typography.labelMedium, color = if (selectedTabIndex == 2) GymPrimaryIndigo else MaterialTheme.colorScheme.onSurfaceVariant) }
                         )
                     }
                 }
@@ -174,7 +174,7 @@ fun ClientDetailScreen(
                         if (purchases.isEmpty()) {
                             item { EmptyStateText("Купленных абонементов нет") }
                         } else {
-                            item { TabPurchasesView(purchases, client.activeMembership?.purchaseId, cCode) }
+                            item { TabPurchasesView(purchases, client.activeMembership?.purchaseId, client.activeMembership?.isExpired == true, cCode) }
                         }
                     }
                     2 -> {
@@ -513,6 +513,7 @@ fun VisitHistoryItem(visit: Visit, onCancel: () -> Unit) {
 fun TabPurchasesView(
     purchaseHistory: List<MembershipPurchase>,
     activePurchaseId: Long?,
+    activeIsExpired: Boolean,
     currencyCode: String
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -551,13 +552,13 @@ fun TabPurchasesView(
                     }
                     if (purchase.id == activePurchaseId) {
                         Surface(
-                            color = GymGreenSuccess.copy(alpha = 0.15f),
+                            color = if (activeIsExpired) GymRoseAlert.copy(alpha = 0.15f) else GymGreenSuccess.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(6.dp)
                         ) {
                             Text(
-                                text = "АКТИВЕН",
+                                text = if (activeIsExpired) "ИСТЕК" else "АКТИВЕН",
                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                color = GymGreenSuccess,
+                                color = if (activeIsExpired) GymRoseAlert else GymGreenSuccess,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }

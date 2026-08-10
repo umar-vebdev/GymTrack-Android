@@ -54,7 +54,7 @@ class GymRepository(private val db: GymDatabase) {
                         totalVisits = p.totalVisits,
                         expiresAt = p.expiresAt,
                         startsAt = p.startsAt,
-                        isExpired = isExpired || (p.visitsLeft != null && p.visitsLeft <= 0)
+                        isExpired = (isExpired || (p.visitsLeft != null && p.visitsLeft <= 0)),
                     )
                 }
 
@@ -118,8 +118,8 @@ class GymRepository(private val db: GymDatabase) {
             )
             val newId = clientDao.insertClient(entity)
             Result.success(entity.copy(id = newId))
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (_: Exception) {
+            Result.failure(Exception("Ошибка списывания визита"))
         }
     }
 
@@ -127,8 +127,8 @@ class GymRepository(private val db: GymDatabase) {
         try {
             clientDao.deleteClient(id)
             Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (_: Exception) {
+            Result.failure(Exception("Ошибка списывания визита"))
         }
     }
 
@@ -161,8 +161,8 @@ class GymRepository(private val db: GymDatabase) {
                 visitDao.insertVisit(VisitEntity(clientId = clientId, membershipPurchaseId = validPurchase.id, visitedAt = nowStr))
                 Result.success("Успешная отметка! Безлимитный визит зафиксирован.")
             }
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (_: Exception) {
+            Result.failure(Exception("Ошибка списывания визита"))
         }
     }
 
@@ -220,8 +220,8 @@ class GymRepository(private val db: GymDatabase) {
                 name = name, durationType = durationType, durationValue = durationValue, price = price
             ))
             Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (_: Exception) {
+            Result.failure(Exception("Ошибка списывания визита"))
         }
     }
     
@@ -229,8 +229,8 @@ class GymRepository(private val db: GymDatabase) {
         try {
             membershipDao.deleteMembershipType(id)
             Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (_: Exception) {
+            Result.failure(Exception("Ошибка списывания визита"))
         }
     }
 
@@ -241,8 +241,8 @@ class GymRepository(private val db: GymDatabase) {
                 name = name, durationType = durationType, durationValue = durationValue, price = price
             ))
             Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (_: Exception) {
+            Result.failure(Exception("Ошибка списывания визита"))
         }
     }
 
@@ -259,7 +259,7 @@ class GymRepository(private val db: GymDatabase) {
             val cal = Calendar.getInstance()
             cal.time = now
 
-            var expiresAt: String? = null
+            val expiresAt: String?
             var visitsLeft: Int? = null
             var totalVisits: Int? = null
 
@@ -286,8 +286,8 @@ class GymRepository(private val db: GymDatabase) {
             )
             membershipDao.insertPurchase(purchase)
             Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (_: Exception) {
+            Result.failure(Exception("Ошибка списывания визита"))
         }
     }
 
@@ -314,23 +314,6 @@ class GymRepository(private val db: GymDatabase) {
     }
 
     // 4. PRODUCTS & SALES
-    fun getProducts(category: String? = null, query: String = ""): Flow<List<Product>> {
-        val flow = if (query.isBlank()) productDao.getAllProducts() else productDao.searchProducts(query)
-        return flow.map { list ->
-            list.filter { category == null || category == "all" || it.category.equals(category, ignoreCase = true) }
-                .map {
-                    Product(
-                        id = it.id,
-                        name = it.name,
-                        category = it.category,
-                        price = it.price,
-                        stockQuantity = it.stockQuantity,
-                        isActive = it.isActive
-                    )
-                }
-        }
-    }
-
     fun getProductsAdmin(categories: Set<String> = emptySet(), query: String = ""): Flow<List<Product>> {
         val flow = if (query.isBlank()) productDao.getAllProductsAdmin() else productDao.searchProductsAdmin(query)
         return flow.map { list ->
@@ -362,8 +345,8 @@ class GymRepository(private val db: GymDatabase) {
             )
             productDao.insertProduct(product)
             Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (_: Exception) {
+            Result.failure(Exception("Ошибка списывания визита"))
         }
     }
 
@@ -372,8 +355,8 @@ class GymRepository(private val db: GymDatabase) {
             val p = productDao.getProductById(id) ?: return@withContext Result.failure(Exception("Товар не найден"))
             productDao.updateProduct(p.copy(name = name.trim(), category = category, price = price, stockQuantity = stock))
             Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (_: Exception) {
+            Result.failure(Exception("Ошибка списывания визита"))
         }
     }
 
@@ -381,8 +364,8 @@ class GymRepository(private val db: GymDatabase) {
         try {
             productDao.deleteProduct(id)
             Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (_: Exception) {
+            Result.failure(Exception("Ошибка списывания визита"))
         }
     }
 
@@ -407,8 +390,8 @@ class GymRepository(private val db: GymDatabase) {
             productDao.updateProduct(product.copy(stockQuantity = newStock))
 
             Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+        } catch (_: Exception) {
+            Result.failure(Exception("Ошибка списывания визита"))
         }
     }
 
@@ -692,7 +675,7 @@ class GymRepository(private val db: GymDatabase) {
             val date = dayFormat.parse(dateStr) ?: return false
             val today = dayFormat.parse(dayFormat.format(Date())) ?: return false
             date.before(today)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -731,20 +714,8 @@ class GymRepository(private val db: GymDatabase) {
             val today = dayFormat.parse(dayFormat.format(Date())) ?: return 999
             val diffMs = target.time - today.time
             (diffMs / (1000 * 60 * 60 * 24)).toInt()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             999
-        }
-    }
-
-    private fun formatTimeOnly(isoStr: String): String {
-        return try {
-            if (isoStr.length >= 16 && isoStr.contains("T")) {
-                isoStr.substring(11, 16)
-            } else {
-                isoStr
-            }
-        } catch (e: Exception) {
-            isoStr
         }
     }
 }

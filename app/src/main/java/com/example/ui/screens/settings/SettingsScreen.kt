@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.theme.GymPrimaryIndigo
 import com.example.ui.viewmodel.GymViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import android.content.pm.PackageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -421,6 +423,49 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Button(
+                onClick = { viewModel.logout() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            ) {
+                Icon(Icons.Default.Logout, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Выйти из аккаунта",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Version Info
+            val context = LocalContext.current
+            val packageInfo = remember {
+                try {
+                    context.packageManager.getPackageInfo(context.packageName, 0)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            val versionName = packageInfo?.versionName ?: "1.0.0"
+
+            Text(
+                text = "GymTrack v$versionName",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
         }
     }
 

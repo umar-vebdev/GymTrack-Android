@@ -11,7 +11,9 @@ import com.example.data.repository.GymRepository
 import com.example.domain.model.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GymViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = GymDatabase.getInstance(application)
@@ -44,7 +46,7 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
     val clients: StateFlow<List<Client>> = combine(
         searchQuery,
         selectedFilterCategories,
-        gymRepository.searchClients("")
+        gymRepository.searchClients(""),
     ) { query, categories, allClients ->
         var list = if (query.isBlank()) {
             allClients
@@ -59,8 +61,8 @@ class GymViewModel(application: Application) : AndroidViewModel(application) {
         if (categories.isNotEmpty() && !categories.contains("all")) {
             list = list.filter { client ->
                 val active = client.activeMembership
-                val matchesVisits = categories.contains("visits") && active?.durationType == "visits"
-                val matchesDays = categories.contains("days") && active?.durationType == "days"
+                val matchesVisits = (categories.contains("visits") && active?.durationType == "visits")
+                val matchesDays = (categories.contains("days") && active?.durationType == "days")
                 val matchesExpiring = categories.contains("expiring") && (active?.isExpired == true || (active?.visitsLeft ?: 99) <= 2)
                 matchesVisits || matchesDays || matchesExpiring
             }
