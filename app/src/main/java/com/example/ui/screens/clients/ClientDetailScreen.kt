@@ -15,7 +15,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.model.Client
@@ -268,11 +271,11 @@ fun ClientHeaderCard(client: Client, onDeleteClick: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Surface(color = GymIndigoContainer, shape = RoundedCornerShape(6.dp)) {
+                Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(6.dp)) {
                     Text(
                         text = "Код: ${client.clientCode}",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = GymIndigoOnContainer,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
@@ -647,7 +650,15 @@ fun SellMembershipDialog(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Text("Клиент: ${client.fullName}", style = MaterialTheme.typography.titleMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.SemiBold)
+            val clientNameText = buildAnnotatedString {
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                    append("Клиент: ")
+                }
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)) {
+                    append(client.fullName)
+                }
+            }
+            Text(text = clientNameText, style = MaterialTheme.typography.titleMedium)
 
             Text("Выберите тариф:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
@@ -673,7 +684,7 @@ fun SellMembershipDialog(
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text("${type.durationValue} ${if (type.durationType == "visits") "визитов" else "дней"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            Text("${type.price.toInt()} $currencyCode", style = MaterialTheme.typography.bodyMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.Bold)
+                            Text("${type.price.toInt()} $currencyCode", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -745,7 +756,15 @@ fun SellProductDialog(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text("Продажа товара", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
-            Text("Клиент: ${client.fullName}", style = MaterialTheme.typography.titleMedium, color = GymPrimaryIndigo, fontWeight = FontWeight.SemiBold)
+            val clientNameText = buildAnnotatedString {
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                    append("Клиент: ")
+                }
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)) {
+                    append(client.fullName)
+                }
+            }
+            Text(text = clientNameText, style = MaterialTheme.typography.titleMedium)
 
             Text("Выберите товар:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 

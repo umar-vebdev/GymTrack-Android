@@ -511,6 +511,12 @@ fun GeneralSellProductDialog(
     var selectedClientId by remember { mutableLongStateOf(clients.firstOrNull()?.id ?: 1L) }
     var quantity by remember { mutableIntStateOf(1) }
     var paymentMethod by remember { mutableStateOf("cash") }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredClients = clients.filter {
+        it.fullName.contains(searchQuery, ignoreCase = true) || 
+        it.clientCode.contains(searchQuery, ignoreCase = true)
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -520,8 +526,17 @@ fun GeneralSellProductDialog(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Выберите покупателя:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Поиск клиента...") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 LazyColumn(modifier = Modifier.heightIn(max = 150.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    items(clients) { c ->
+                    items(filteredClients) { c ->
                         val isSelected = selectedClientId == c.id
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
